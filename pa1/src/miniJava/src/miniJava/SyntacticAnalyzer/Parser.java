@@ -77,11 +77,11 @@ public class Parser {
 	public void parseClassDeclaration() throws SyntaxError{
 		if(debug==true) System.out.println("Running parseClassDeclaration");
 		accept(Token.CLASS, "parseClassDeclaration");
-		parseIdentifier();
+		parseClassIdentifier();
 		accept(Token.LCURLY, "parseClassDeclaration");
 		while(currentToken.kind != Token.RCURLY){
-			parseDeclarators();
-			parseIdentifier();
+			parseDeclarators();			
+			parseIdentifier();			
 			switch(currentToken.kind){
 				case Token.SEMICOLON:
 					acceptIt();
@@ -101,8 +101,13 @@ public class Parser {
 					}
 					if(currentToken.kind == Token.RETURN){
 						acceptIt();
-						parseExpression();
-						accept(Token.SEMICOLON, "parseClassDeclaration");
+						if (currentToken.kind == Token.SEMICOLON) {
+							accept(Token.SEMICOLON, "parseClassDeclaration");
+						}
+						else {
+							parseExpression();
+							accept(Token.SEMICOLON, "parseClassDeclaration");					
+						}
 					}
 					accept(Token.RCURLY, "parseClassDeclaration");
 					break;
@@ -111,14 +116,32 @@ public class Parser {
 					parseNum();
 					acceptIt();
 					break;
+				case Token.IDENTIFIER:
+					parseIdentifier();
+					if (currentToken.kind == Token.SEMICOLON) {
+						acceptIt();
+					}
+					else {
+						parseExpression();
+						accept(Token.SEMICOLON, "parseClassDeclaration");
+					}
+					break;
 				default: 
-					syntacticError("Unexpected Token in parseClassDecleration", currentToken.spelling);
+					syntacticError("Unexpected Token in parseClassDeclaration", currentToken.spelling);
 					break;
 			}
 		}
 		accept(Token.RCURLY, "parseClassDeclaration");
 	}
-	
+	public void parseClassIdentifier() throws SyntaxError {
+		if(debug==true) System.out.println("Running parseClassIdentifier");
+		if (currentToken.kind == Token.IDENTIFIER) {
+			acceptIt();
+		}
+		else {
+			syntacticError("Unexpected Token in parseClassIdentifier", currentToken.spelling); 
+		}
+	}
 	public void parseIdentifier() throws SyntaxError {
 		if(debug==true) System.out.println("Running parseIdentifier");
 		if (currentToken.kind == Token.IDENTIFIER) {
@@ -179,9 +202,12 @@ public class Parser {
 	//Only accepts public, static or private, anything else is rejected
 	public void parseDeclarators() throws SyntaxError{
 		if(debug==true) System.out.println("Running parseDecalarators");
-		if(currentToken.kind == Token.PUBLIC || currentToken.kind == Token.PRIVATE || currentToken.kind == Token.STATIC) {
+		while (currentToken.kind == Token.PUBLIC || currentToken.kind == Token.PRIVATE || currentToken.kind == Token.STATIC) {
 			acceptIt();
 		}
+		// else {
+		// 	syntacticError("Missing Visibility Token in parseDeclarators", currentToken.spelling); 
+		// }
 		parseType();
 	}
 	
@@ -221,6 +247,40 @@ public class Parser {
 			}
 		}	
 	}
+
+	public void parseParameterType() throws SyntaxError{
+		if(debug==true) System.out.println("Running parseType");
+		while (currentToken.kind != Token.IDENTIFIER) {
+			switch(currentToken.kind){
+				case Token.INT:
+					acceptIt();
+					if(currentToken.kind == Token.LBRACKET){
+						acceptIt();
+						accept(Token.RBRACKET, "parseType");	
+					}
+					break;
+				case Token.IDENTIFIER:
+					parseIdentifier();
+					if(currentToken.kind == Token.LBRACKET){
+						acceptIt();
+						accept(Token.RBRACKET, "parseType");	
+					}
+					break;
+				case Token.BOOLEAN: 
+					acceptIt();
+					break;
+				case Token.STATIC: 
+					acceptIt();
+					break;
+				// case Token.VOID: 
+				// 	acceptIt();
+				// 	break;
+				default:
+					syntacticError("Unexpected Token in parseType", currentToken.spelling);
+					break;
+			}
+		}	
+	}
 	
 	public void parseNum() throws SyntaxError {
 		if(debug==true) System.out.println("Running parseNum");
@@ -246,11 +306,11 @@ public class Parser {
 	//ParameterList ::= Type id ( , Type id )*
 	public void parseParameterList() throws SyntaxError {
 		if(debug==true) System.out.println("Running parseParameterList");
-		parseType();
+		parseParameterType();
 		parseIdentifier();
 		while(currentToken.kind == Token.COMMA){
 			acceptIt();
-			parseType();
+			parseParameterType();
 			parseIdentifier();
 		}
 	}
@@ -303,10 +363,8 @@ public class Parser {
 					}
 				}
 				else if(currentToken.kind == Token.PERIOD){
-					do{
-						acceptIt();
-						parseIdentifier();
-					}
+					acceptIt();
+					parseIdentifier();
 					while(currentToken.kind == Token.PERIOD); {
 						if(currentToken.kind == Token.LPAREN){
 							acceptIt();
@@ -326,16 +384,21 @@ public class Parser {
 							parseExpression();
 							accept(Token.SEMICOLON, "parseStatement");
 						}
-					}				
+					}								
 				}
-				else if(currentToken.kind == Token.LPAREN){
-					acceptIt();
-					if(currentToken.kind != Token.RPAREN){
-						parseArgumentList();
-					}
+				else if (currentToken.kind == Token.LPAREN)	{
+					accept(Token.LPAREN, "parseStatement");
 					accept(Token.RPAREN, "parseStatement");
 					accept(Token.SEMICOLON, "parseStatement");
 				}
+				// else if(currentToken.kind == Token.LPAREN){
+				// 	acceptIt();
+				// 	if(currentToken.kind != Token.RPAREN){
+				// 		parseArgumentList();
+				// 	}
+				// 	accept(Token.RPAREN, "parseStatement");
+				// 	accept(Token.SEMICOLON, "parseStatement");
+				// }
 				else if(currentToken.kind == Token.EQUALS){
 					acceptIt();
 					parseExpression();
@@ -348,9 +411,9 @@ public class Parser {
 						parseExpression();
 						accept(Token.SEMICOLON, "parseStatement");
 					}
-					else {
-						accept(Token.SEMICOLON, "parseStatement");
-					}
+					// else {
+					// 	accept(Token.SEMICOLON, "parseStatement");
+					// }
 				}
 				break;
 			case Token.THIS:
@@ -369,10 +432,8 @@ public class Parser {
 				}
 				else {
 					if(currentToken.kind == Token.LBRACKET){
-						acceptIt();
-						
-						parseExpression();
-						
+						acceptIt();						
+						parseExpression();						
 						accept(Token.RBRACKET, "parseStatement");
 					}
 					accept(Token.EQUALS, "parseStatement");				
@@ -385,32 +446,48 @@ public class Parser {
 				parseIdentifier();
 				if (currentToken.kind == Token.EQUALS) {
 					accept(Token.EQUALS, "parseStatement");
+					while (currentToken.spelling.equals("!") || currentToken.spelling.equals("-")) {
+						acceptIt();
+					}
 					parseExpression();
 					accept(Token.SEMICOLON, "parseStatement");
 				}		
-				else {
-					accept(Token.SEMICOLON, "parseStatement");
-				}			
+				// else {
+				// 	accept(Token.SEMICOLON, "parseStatement");
+				// }			
 				break;
 			case Token.INT: 
 				parseType();
 				parseIdentifier();
 				if (currentToken.kind == Token.EQUALS) {
 					accept(Token.EQUALS, "parseStatement");
+					while (currentToken.spelling.equals("!") || currentToken.spelling.equals("-")) {
+						acceptIt();
+					}
 					parseExpression();
 					accept(Token.SEMICOLON, "parseStatement");
 				}
-				else {
-					accept(Token.SEMICOLON, "parseStatement");
-				}		
-				break;	
-			case Token.VOID: 
-				parseType();
-				parseIdentifier();
-				accept(Token.EQUALS, "parseStatement");
-				parseExpression();
-				accept(Token.SEMICOLON, "parseStatement");
+				// else {
+				// 	accept(Token.SEMICOLON, "parseStatement");
+				// }		
 				break;
+			case Token.RETURN:
+				acceptIt();
+				if (currentToken.kind == Token.SEMICOLON) {
+					accept(Token.SEMICOLON, "parseClassDeclaration");
+				}
+				else {
+					parseExpression();
+					accept(Token.SEMICOLON, "parseClassDeclaration");					
+				}
+				break;
+			// case Token.VOID: 
+			// 	parseType();
+			// 	parseIdentifier();
+			// 	accept(Token.EQUALS, "parseStatement");
+			// 	parseExpression();
+			// 	accept(Token.SEMICOLON, "parseStatement");
+			// 	break;
 			default:
 				syntacticError("Unexpected Token in parseParameterList", currentToken.spelling);
 			}	
@@ -421,6 +498,25 @@ public class Parser {
 		if(debug==true) System.out.println("Running parseReference");
 		if(currentToken.kind != Token.THIS) {
 			parseIdentifier();
+			if(Token.spell(currentToken.kind) == "!" || Token.spell(currentToken.kind) == "-") {
+				syntacticError("Unexpected Token in parseReference", currentToken.spelling);
+			}
+			else if (currentToken.kind == Token.PERIOD) {
+				while(currentToken.kind == Token.PERIOD)  {
+					acceptIt();
+					parseIdentifier();					
+				}	
+			}
+			else if (currentToken.kind == Token.LPAREN) {
+				acceptIt();
+				if (currentToken.kind == Token.RPAREN) {
+					acceptIt();
+				}
+				else {
+					parseArgumentList();
+					accept(Token.RPAREN, "parseReference");						
+				}
+			}
 		}
 		else {
 			acceptIt();
@@ -431,9 +527,15 @@ public class Parser {
 	
 	public void parseExpression() throws SyntaxError{
 		if(debug==true) System.out.println("Running parseExpression");
+		if (Token.spell(currentToken.kind).equals("!") || Token.spell(currentToken.kind).equals("-")) {
+			acceptIt();
+		}
 		parseExpandedExpression();
 		while(currentToken.kind == Token.OPERATOR){
 			parseBinop(); 
+			if (Token.spell(currentToken.kind).equals("-") || Token.spell(currentToken.kind).equals("!")) {
+				acceptIt();
+			}
 			parseExpandedExpression();
 		}
 	}
@@ -449,10 +551,10 @@ public class Parser {
 			case Token.NUM:
 				parseNum();
 				break;
-			case Token.OPERATOR:
-				parseUnop();
-				parseExpandedExpression();
-				break;
+			// case Token.OPERATOR:
+			// 	parseUnop();
+			// 	parseExpandedExpression();
+			// 	break;
 			case Token.NEW:
 				acceptIt();
 				parseIdentifier();
@@ -475,16 +577,29 @@ public class Parser {
 				parseExpression();
 				accept(Token.RPAREN, "parseExpandedExpression");
 				break;
+			case Token.THIS:
+				acceptIt();
+				if (currentToken.kind == Token.PERIOD) {
+					acceptIt();
+					parseReference();
+				}
+				break;
+			case Token.OPERATOR:
+				if (Token.spell(currentToken.kind).equals("!") || Token.spell(currentToken.kind).equals("!")) {
+					acceptIt();
+				}
+				break;
 			default:
 				parseReference();
-				if(currentToken.kind == Token.LPAREN) {
-					acceptIt();
-					if(currentToken.kind != Token.RPAREN) {
-						parseArgumentList();
-					}
-					accept(Token.RPAREN, "parseExpandedExpression");
-				}
-				else if(currentToken.kind == Token.LBRACKET){
+				// if(currentToken.kind == Token.LPAREN) {
+				// 	acceptIt();
+				// 	if(currentToken.kind != Token.RPAREN) {
+				// 		parseArgumentList();
+				// 	}
+				// 	accept(Token.RPAREN, "parseExpandedExpression");
+				// }
+				// else if(currentToken.kind == Token.LBRACKET){
+				if(currentToken.kind == Token.LBRACKET){
 					acceptIt();
 					parseExpression();
 					accept(Token.RBRACKET, "parseExpandedExpression");
@@ -494,6 +609,17 @@ public class Parser {
 						acceptIt();
 						parseIdentifier();
 					}					 					
+				}
+				else if (currentToken.kind == Token.LPAREN){
+					acceptIt();
+					if (currentToken.kind == Token.RPAREN) {
+						accept(Token.RPAREN, "parseExpandedExpression");
+					}
+					else {
+						parseArgumentList();
+						accept(Token.RPAREN, "parseExpandedExpression");
+					}
+														 					
 				}
 				break;
 		}
@@ -523,7 +649,8 @@ public class Parser {
 	
 	public void parseUnop() throws SyntaxError {
 		if(debug==true) System.out.println("Running parseUnop");
-		if (currentToken.kind == Token.OPERATOR) {
+		if (Token.spell(currentToken.kind).equals("-") || Token.spell(currentToken.kind).equals("!")) {
+		//if (currentToken.kind == Token.OPERATOR) {
 			previousTokenPosition = currentToken.position;
 			if(debug==true) System.out.println(currentToken.spelling);
 			currentToken = Scanner.scan();

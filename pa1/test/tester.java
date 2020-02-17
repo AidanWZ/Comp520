@@ -23,7 +23,7 @@ public class Checkpoint1 {
 		System.out.println("Run pa1_tests on miniJava compiler in " + projDir);
 		
 		// compensate for project organization 
-		File classPath = new File(projDir + "/bin");
+		File classPath = new File(projDir + "/pa1/src/minijava/bin");
 		if (!classPath.isDirectory()) {
 			// no bin directory in project, assume projDir is root for class files
 			classPath = new File(projDir);
@@ -36,7 +36,7 @@ public class Checkpoint1 {
 		}
 		
 		// test directory present ?
-		File testDir = new File(projDir + "/../tests/pa1_tests");
+		File testDir = new File(projDir + "/pa1/test/pa1_tests");
 		if (! testDir.isDirectory()) {
 			System.out.println("pa1_tests directory not found - exiting!");
 			return;
