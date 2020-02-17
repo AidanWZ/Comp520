@@ -2,11 +2,11 @@ package miniJava.SyntacticAnalyzer;
 
 import miniJava.SyntacticAnalyzer.SourcePosition;
 
-final class Token extends Object {
+public final class Token extends Object {
 
-	protected int kind;
-	protected String spelling;
-	protected SourcePosition position;
+	public int kind;
+	public String spelling;
+	public SourcePosition position;
 
 	public Token(int kind, String spelling, SourcePosition position) {
 		this.kind = kind;

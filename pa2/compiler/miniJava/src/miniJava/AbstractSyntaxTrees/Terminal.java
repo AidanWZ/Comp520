@@ -11,11 +11,11 @@ import miniJava.SyntacticAnalyzer.TokenKind;
 abstract public class Terminal extends AST {
 
   public Terminal (Token t) {
-	super(t.posn);
+	  super(t.position);
     spelling = t.spelling;
     kind = t.kind;
   }
 
-  public TokenKind kind;
+  public int kind;
   public String spelling;
 }
