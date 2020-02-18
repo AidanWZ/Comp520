@@ -35,6 +35,12 @@ public class EvalAST implements Visitor<Object,Integer> {
     	// leaf node yields integer value of the spelling
     	return Integer.parseInt(e.num.spelling);
     }
+
+    @Override
+    public Integer visitUnaryExpr(UnaryExpr expr, Object arg) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 	
 }
 
