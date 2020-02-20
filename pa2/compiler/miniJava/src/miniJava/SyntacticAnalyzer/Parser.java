@@ -106,6 +106,7 @@ public class Parser {
 	}
 
 	public AST parse() throws SyntaxError{
+		if(debug==true) System.out.println("Running parse");
 		return new Package(parseProgram(), currentToken.position);
 	}
 
@@ -118,10 +119,10 @@ public class Parser {
 			ClassDeclList list = new ClassDeclList();
 			while(currentToken.kind == Token.CLASS){
 				list.add(parseClassDeclaration());				
-			}
-			if (currentToken.kind != Token.EOT) {
+			}			
+			if (currentToken.kind != Token.EOT) {				
 				syntacticError("Unexpected EOT", currentToken.spelling);
-			}
+			}			
 			return list;
 		}
 		catch (SyntaxError s) { 
@@ -131,27 +132,26 @@ public class Parser {
 
 	//ClassDeclaration ::= class id { ( FieldDeclaration | MethodDeclaration )* }
 	public ClassDecl parseClassDeclaration() throws SyntaxError{
-		FieldDeclList fieldList = new FieldDeclList();
-		MethodDeclList methodList = new MethodDeclList();
-
 		if(debug==true) System.out.println("Running parseClassDeclaration");
-		accept(Token.CLASS, "parseClassDeclaration");
-		parseIdentifier();
+		FieldDeclList fieldList = new FieldDeclList();
+		MethodDeclList methodList = new MethodDeclList();		
+		accept(Token.CLASS, "parseClassDeclaration");		
+		Identifier classid = parseIdentifier();
 		accept(Token.LCURLY, "parseClassDeclaration");
 		Declarators decls;
 		while(currentToken.kind != Token.RCURLY){
 			decls = parseDeclarators();
-			parseIdentifier();
+			Identifier name = parseIdentifier();
 			switch(currentToken.kind){
 				case Token.SEMICOLON:
 					acceptIt();
-					fieldList.add(new FieldDecl(decls.isPrivate, decls.isStatic, decls.type, currentToken.spelling, currentToken.position));
+					fieldList.add(new FieldDecl(decls.isPrivate, decls.isStatic, decls.type, name.spelling, currentToken.position));
 					break;
 				case Token.EQUALS:
 					acceptIt();
 					parseExpression();
 					accept(Token.SEMICOLON, "parseClassDeclaration");
-					fieldList.add(new FieldDecl(decls.isPrivate, decls.isStatic, decls.type, currentToken.spelling, currentToken.position));
+					fieldList.add(new FieldDecl(decls.isPrivate, decls.isStatic, decls.type, name.spelling, currentToken.position));
 					break;
 				case Token.LPAREN:  
 					acceptIt();
@@ -162,42 +162,44 @@ public class Parser {
 					}
 					else if (currentToken.kind == Token.RPAREN) {
 						accept(Token.RPAREN, "parseClassDeclaration");
-					}
-					accept(Token.LCURLY, "parseClassDeclaration");
-
-					StatementList statementList = new StatementList();
-					while(currentToken.kind != Token.RETURN && currentToken.kind != Token.RCURLY ){
-						statementList.add(parseStatement());
 					}					
-					accept(Token.RCURLY, "parseClassDeclaration");
-					methodList.add(new MethodDecl(null, parameterList, statementList, currentToken.position));
+					accept(Token.LCURLY, "parseClassDeclaration");
+					StatementList statementList = new StatementList();					
+					while(currentToken.kind != Token.RCURLY){						
+						statementList.add(parseStatement());									
+					}									
+					accept(Token.RCURLY, "parseClassDeclaration");			
+					methodList.add(new MethodDecl(new FieldDecl(decls.isPrivate, decls.isStatic, decls.type, name.spelling, currentToken.position), parameterList, statementList, currentToken.position));				
 					break;
 				default: 
 					syntacticError("Unexpected Token in parseClassDecleration", currentToken.spelling);
 					break;
-			}
-		}
+			}			
+		}		
 		accept(Token.RCURLY, "parseClassDeclaration");
-		ClassDecl declaration = new ClassDecl(null, fieldList, methodList, currentToken.position);
-		return declaration;
+		return new ClassDecl(classid.spelling, fieldList, methodList, currentToken.position);
 	}
 	
 	public Identifier parseIdentifier() throws SyntaxError {
 		if(debug==true) System.out.println("Running parseIdentifier");
+		Token temp;
 		if (currentToken.kind == Token.IDENTIFIER) {
+			temp = new Token(Token.IDENTIFIER, currentToken.spelling, currentToken.position);
+			accept(Token.IDENTIFIER, "parseIdentifier");
 			previousTokenPosition = currentToken.position;
-			if(debug==true) System.out.println(currentToken.spelling);
-			return new Identifier(currentToken);
+			return new Identifier(temp);
 		} 
 		else if (currentToken.kind == Token.BOOLEAN) {
+			temp = new Token(Token.IDENTIFIER, currentToken.spelling, currentToken.position);
+			accept(Token.BOOLEAN, "parseIdentifier");
 			previousTokenPosition = currentToken.position;
-			if(debug==true) System.out.println(currentToken.spelling);
-			return new Identifier(currentToken);
+			return new Identifier(temp);
 		}
 		else if (currentToken.kind == Token.INT) {
+			temp = new Token(Token.IDENTIFIER, currentToken.spelling, currentToken.position);
+			accept(Token.INT, "parseIdentifier");
 			previousTokenPosition = currentToken.position;
-			if(debug==true) System.out.println(currentToken.spelling);
-			return new Identifier(currentToken);
+			return new Identifier(temp);
 		}
 		else {
 			syntacticError("Unexpected Token in parseIdentifier", currentToken.spelling); 
@@ -210,13 +212,14 @@ public class Parser {
 	//Only accepts public, static or private, anything else is rejected
 	public Declarators parseDeclarators() throws SyntaxError{
 		if(debug==true) System.out.println("Running parseDecalarators");
-		boolean isPrivate;
-		boolean isStatic;
+		boolean isPrivate = false;
+		boolean isStatic = false;
 		if (currentToken.kind == Token.PRIVATE) {
 			acceptIt();
 			isPrivate = true;
 		}
-		else {
+		else if (currentToken.kind == Token.PUBLIC){
+			acceptIt();
 			isPrivate = false;
 		}
 		if (currentToken.kind == Token.STATIC) {
@@ -226,7 +229,8 @@ public class Parser {
 		else {
 			isStatic = false;
 		}
-		return new Declarators(isPrivate, isStatic, parseType(), currentToken.spelling, currentToken.position);
+		Identifier id = new Identifier(currentToken);
+		return new Declarators(isPrivate, isStatic, parseType(), id.spelling, currentToken.position);
 	}
 	
 	//Type ::= int | boolean | id | ( int | id ) [] 
@@ -234,46 +238,48 @@ public class Parser {
 	//if the type is int or id we need to figure out if it is an int/id/int array/id array
 	public TypeDenoter parseType() throws SyntaxError{
 		if(debug==true) System.out.println("Running parseType");
-		while (currentToken.kind != Token.IDENTIFIER) {
-			switch(currentToken.kind){
-				case Token.INT:
+		Token current = null;
+		switch(currentToken.kind){
+			case Token.INT:
+				current = currentToken;
+				acceptIt();
+				if(currentToken.kind == Token.LBRACKET){
 					acceptIt();
-					if(currentToken.kind == Token.LBRACKET){
-						acceptIt();
-						accept(Token.RBRACKET, "parseType");	
-						return new ArrayType(new BaseType(TypeKind.INT, currentToken.position), currentToken.position);
-					}
-					else {
-						return new BaseType(TypeKind.INT, currentToken.position);
-					}					
-				case Token.IDENTIFIER:
-					parseIdentifier();
-					if(currentToken.kind == Token.LBRACKET){
-						acceptIt();
-						accept(Token.RBRACKET, "parseType");	
-						return new ArrayType(new ClassType(new Identifier(currentToken), currentToken.position), currentToken.position);					}
-					else {
-						return new ClassType(new Identifier(currentToken), currentToken.position);					
-					}	
-				case Token.BOOLEAN: 
+					accept(Token.RBRACKET, "parseType");	
+					return new ArrayType(new BaseType(TypeKind.INT, current.position), current.position);
+				}
+				else {
+					return new BaseType(TypeKind.INT, currentToken.position);
+				}					
+			case Token.IDENTIFIER:
+				current = currentToken;
+				parseIdentifier();
+				if(currentToken.kind == Token.LBRACKET){
 					acceptIt();
-					if(currentToken.kind == Token.LBRACKET){
-						acceptIt();
-						accept(Token.RBRACKET, "parseType");
-						return new ArrayType(new BaseType(TypeKind.BOOLEAN, currentToken.position), currentToken.position);					
-					}
-					else {
-						return new BaseType(TypeKind.BOOLEAN, currentToken.position);					
-					}	
-				case Token.VOID: 
+					accept(Token.RBRACKET, "parseType");	
+					return new ArrayType(new ClassType(new Identifier(current), current.position), current.position);					}
+				else {
+					return new ClassType(new Identifier(currentToken), current.position);					
+				}	
+			case Token.BOOLEAN: 
+				current = currentToken;
+				acceptIt();
+				if(currentToken.kind == Token.LBRACKET){
 					acceptIt();
-					return new BaseType(TypeKind.VOID, currentToken.position);
-				default:
-					syntacticError("Unexpected Token in parseType", currentToken.spelling);
-					return new BaseType(TypeKind.ERROR, currentToken.position);		
-			}
+					accept(Token.RBRACKET, "parseType");
+					return new ArrayType(new BaseType(TypeKind.BOOLEAN, current.position), current.position);					
+				}
+				else {
+					return new BaseType(TypeKind.BOOLEAN, current.position);					
+				}	
+			case Token.VOID:
+				current = currentToken;
+				acceptIt();
+				return new BaseType(TypeKind.VOID, current.position);
+			default:
+				syntacticError("Unexpected Token in parseType", currentToken.spelling);
+				return new BaseType(TypeKind.ERROR, currentToken.position);		
 		}
-		return null;
 	}
 	
 	public IntLiteral parseNum() throws SyntaxError {
@@ -560,9 +566,16 @@ public class Parser {
 			// 	break;
 			case Token.RETURN:
 				acceptIt();
-				Expression returned = parseExpression();
-				accept(Token.SEMICOLON, "parseClassDeclaration");
-				return new ReturnStmt(returned, currentToken.position);
+				if (currentToken.kind  != Token.SEMICOLON) {
+					Expression returned = parseExpression();
+					accept(Token.SEMICOLON, "parseClassDeclaration");
+					return new ReturnStmt(returned, currentToken.position);
+				}
+				else {
+					accept(Token.SEMICOLON, "parseClassDeclaration");
+					return new ReturnStmt(null, currentToken.position);
+				}
+				
 			default:
 				syntacticError("Unexpected Token in parseParameterList", currentToken.spelling);
 			}
@@ -578,10 +591,10 @@ public class Parser {
 			return new ThisRef(currentToken.position);
 		}
 		else {	
-			Reference ref = parseReference();
+			//Reference ref = parseReference();
 			if (currentToken.kind == Token.PERIOD) {
 				acceptIt();
-				return new QualRef(ref, parseIdentifier(), currentToken.position);
+				return new QualRef(null, parseIdentifier(), currentToken.position);
 			}
 			else {
 				return new IdRef(parseIdentifier(), currentToken.position);
@@ -592,48 +605,56 @@ public class Parser {
 	public Expression parseExpression() throws SyntaxError{
 		if(debug==true) System.out.println("Running parseExpression");
 		Expression expr1 = parseExpandedExpression();
-		if (currentToken.kind == Token.OPERATOR) {
-			if (Token.isBinop(currentToken.spelling)) {
-				Operator op = parseBinop(); 
-				Expression expr2 = parseExpandedExpression();
-				BinaryExpr binExpr = new BinaryExpr(op, expr1, expr2, currentToken.position);
-				while(currentToken.kind == Token.OPERATOR){
-					Operator opLocal = parseBinop(); 
-					Expression exprLocal = parseExpandedExpression();
-					binExpr = new BinaryExpr(opLocal, binExpr, exprLocal, currentToken.position);
-				}
-				return binExpr;
+		//System.out.println(Scanner.scanTokenInput(currentToken.spelling.charAt(0)));
+		//System.out.println(Token.isBinop(currentToken.spelling));
+		if (Token.isBinop(currentToken.spelling)) {
+			Operator op = parseBinop(); 
+			Expression expr2 = parseExpandedExpression();
+			BinaryExpr binExpr = new BinaryExpr(op, expr1, expr2, currentToken.position);
+			while(currentToken.kind == Token.OPERATOR){
+				Operator opLocal = parseBinop(); 
+				Expression exprLocal = parseExpandedExpression();
+				binExpr = new BinaryExpr(opLocal, binExpr, exprLocal, currentToken.position);
 			}
-			else if (Token.isUnop(currentToken.spelling)){
-				return new UnaryExpr(parseUnop(), parseExpression(), currentToken.position);
-			}
+			return binExpr;
 		}
+		else if (Token.isUnop(currentToken.spelling)){
+			return new UnaryExpr(parseUnop(), parseExpression(), currentToken.position);
+		}		
 		else {
 			return expr1;
 		}
-		return null;
 	}
 	public Expression parseExpandedExpression() throws SyntaxError{
 		if(debug==true) System.out.println("Running parseExpandedExpression");
+		Token current = null;
 		switch(currentToken.kind) {
 			case Token.FALSE:
+				current = currentToken;
 				acceptIt();
-				return new LiteralExpr(new IntLiteral(currentToken), currentToken.position);
+				return new LiteralExpr(new BooleanLiteral(current), current.position);
 			case Token.TRUE:
+				current = currentToken;
 				acceptIt();
-				return new LiteralExpr(new IntLiteral(currentToken), currentToken.position);	
+				return new LiteralExpr(new BooleanLiteral(current), current.position);	
 			case Token.NUM:
+				current = currentToken;
 				parseNum();
-				return new LiteralExpr(new IntLiteral(currentToken), currentToken.position);
+				return new LiteralExpr(new IntLiteral(current), current.position);
 			case Token.OPERATOR:
-				if (Token.isBinop(currentToken.spelling)) {
-					return parseExpression();
+				current = currentToken;
+				if (Token.isUnop(currentToken.spelling)) {
+					return new UnaryExpr(parseUnop(), parseExpandedExpression(), current.position);
 				}
-				else {
-					return new UnaryExpr(parseUnop(), parseExpandedExpression(), currentToken.position);
-				}
-				
+				// else if (Token.isUnop(currentToken.spelling)) {
+				// 	Operator op = parseBinop();
+				// 	return new BinaryExpr(o, e1, e2, posn);
+				// }
+				// else {
+				// 	return new UnaryExpr(parseUnop(), parseExpandedExpression(), currentToken.position);
+				// }				
 			case Token.NEW:
+				current = currentToken;
 				acceptIt();
 				Identifier id = parseIdentifier();
 				if(currentToken.kind == Token.LBRACKET) {
@@ -642,11 +663,11 @@ public class Parser {
 						accept(Token.RBRACKET, "parseExpandedExpression");
 						switch(id.spelling) {
 							case "int":
-								return new NewArrayExpr(new BaseType(TypeKind.INT, currentToken.position), null, currentToken.position);
+								return new NewArrayExpr(new BaseType(TypeKind.INT, current.position), null, current.position);
 							case "boolean":
-								return new NewArrayExpr(new BaseType(TypeKind.BOOLEAN, currentToken.position), null, currentToken.position);
+								return new NewArrayExpr(new BaseType(TypeKind.BOOLEAN, current.position), null, current.position);
 							case "<id>":
-								return new NewArrayExpr(new ClassType(id, currentToken.position), null, currentToken.position);
+								return new NewArrayExpr(new ClassType(id, current.position), null, current.position);
 						}						
 					}
 					else {
@@ -654,11 +675,11 @@ public class Parser {
 						accept(Token.RBRACKET, "parseExpandedExpression");
 						switch(id.spelling) {
 							case "int":
-								return new NewArrayExpr(new BaseType(TypeKind.INT, currentToken.position), expr, currentToken.position);
+								return new NewArrayExpr(new BaseType(TypeKind.INT, current.position), expr, current.position);
 							case "boolean":
-								return new NewArrayExpr(new BaseType(TypeKind.BOOLEAN, currentToken.position), expr, currentToken.position);
+								return new NewArrayExpr(new BaseType(TypeKind.BOOLEAN, current.position), expr, current.position);
 							case "<id>":
-								return new NewArrayExpr(new ClassType(id, currentToken.position), expr, currentToken.position);
+								return new NewArrayExpr(new ClassType(id, current.position), expr, current.position);
 						}
 					}										
 				}
@@ -666,12 +687,12 @@ public class Parser {
 					accept(Token.LPAREN, "parseExpandedExpression");
 					if (currentToken.kind == Token.RPAREN) {
 						accept(Token.RPAREN, "parseExpandedExpression");
-						return new NewObjectExpr(new ClassType(id, currentToken.position), currentToken.position);
+						return new NewObjectExpr(new ClassType(id, current.position), current.position);
 					}
 					else {
 						parseArgumentList();
 						accept(Token.RPAREN, "parseExpandedExpression");
-						return new NewObjectExpr(new ClassType(id, currentToken.position), currentToken.position);
+						return new NewObjectExpr(new ClassType(id, current.position), current.position);
 					}					
 				}
 				// while (currentToken.kind == Token.PERIOD) {
@@ -680,6 +701,7 @@ public class Parser {
 				// }
 				// break;
 			case Token.LPAREN:
+				current = currentToken;
 				acceptIt();
 				Expression expr = parseExpression();
 				accept(Token.RPAREN, "parseExpandedExpression");

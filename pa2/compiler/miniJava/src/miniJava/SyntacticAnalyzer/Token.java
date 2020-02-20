@@ -111,13 +111,11 @@ public final class Token extends Object {
 	public final static String[] unop = {"-", "!"};
 
 	public static boolean isBinop(String op){
-		for(int i = 0; i < binop.length; i++)
+		for(int i = 0; i < binop.length; i++) {
 			if(binop[i].equals(op)) {
 				return true;
 			}
-			else {
-				return false;
-			}
+		}
 		return false;
 	}
 	private final static int	
@@ -128,9 +126,6 @@ public final class Token extends Object {
 		for(int i = 0; i < unop.length; i++) {
 			if(unop[i].equals(op)) {
 				return true;
-			}
-			else {
-				return false;
 			}
 		}
 		return false;

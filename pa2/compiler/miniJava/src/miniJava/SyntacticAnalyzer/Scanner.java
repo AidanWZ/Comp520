@@ -9,8 +9,6 @@ public final class Scanner {
 	private char currentChar;
 	private StringBuffer currentSpelling;
 	private boolean currentlyScanningToken;
-	private Token[] tokens;
-	private int tokenIndex;
 
 	private boolean isLetter(char c) {
 		return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
@@ -22,8 +20,6 @@ public final class Scanner {
 	public Scanner(SourceFile source) {
 		sourceFile = source;
 		currentChar = sourceFile.getSource();
-		tokens = new Token[1000];
-		tokenIndex = 0;
 	}
 
 	private void takeIt() {
@@ -196,5 +192,49 @@ public final class Scanner {
 				return Token.ERROR;
 		}
 		return Token.ERROR;
+	}
+
+	public int scanTokenInput(char c) {
+		if(isLetter(currentChar)){
+			return Token.IDENTIFIER;
+		}
+		if(isDigit(currentChar)){
+			return Token.NUM;
+		}
+		
+		switch (currentChar) {
+			case ';':
+				return Token.SEMICOLON;
+			case ',':
+				return Token.COMMA;
+			case '.':
+				return Token.PERIOD;	
+			case '>':  case '<':  case '!':
+				return Token.OPERATOR;		
+			case '+':  case '-':  case '*':  case '/':
+				return Token.OPERATOR;	
+			case '|':
+				return Token.OPERATOR;
+			case '&':
+				return Token.OPERATOR;
+			case ':':
+				return Token.COLON;
+			case ')':
+				return Token.RPAREN;
+			case '}':
+				return Token.RCURLY;
+			case '{':
+				return Token.LCURLY;	
+			case '(':
+				return Token.LPAREN;
+			case ']':
+				return Token.RBRACKET;
+			case '[':
+				return Token.LBRACKET;
+			case SourceFile.eot:
+				return Token.EOT;
+			default:
+				return Token.ERROR;
+		}
 	}
 }

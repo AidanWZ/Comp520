@@ -21,6 +21,7 @@ public class SourceFile {
             sourceFile = null;
             source = null;
             currentLine = 0;
+            System.out.println(s);
         }
     }
 

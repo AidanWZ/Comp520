@@ -20,16 +20,20 @@ public class Compiler {
     
     public static boolean getDebugLevel(String[] args) {
         try {
-            if (args.length > 1) {
+            if (args.length == 2) {
                 System.out.println("Debug set to true");
                 return true;
             }
-            return false;
+            else if (args.length == 2) {
+                System.out.println("Debug set to true");
+                return false;
+            }
         }
         catch (Exception o) {
             System.out.println("Debug set to false");
             return false;
         }
+        return false;
     }
 
 	public static void main(String[] args){
