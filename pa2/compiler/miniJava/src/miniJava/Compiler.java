@@ -5,6 +5,8 @@ import miniJava.SyntacticAnalyzer.Parser;
 import miniJava.SyntacticAnalyzer.SourceFile;
 import miniJava.SyntacticAnalyzer.SyntaxError;
 import miniJava.ErrorReporter;
+import miniJava.AbstractSyntaxTrees.AST;
+import miniJava.AbstractSyntaxTrees.ASTDisplay;
 
 public class Compiler {
 
@@ -13,19 +15,25 @@ public class Compiler {
 	private static Scanner scanner;
 	private static Parser parser;
     private static ErrorReporter reporter;
+    private static ASTDisplay display;
+    private static AST result;
     
     public static boolean getDebugLevel(String[] args) {
         try {
-            if (args.length > 1) {
+            if (args.length == 2) {
                 System.out.println("Debug set to true");
                 return true;
             }
-            return false;
+            else if (args.length == 2) {
+                System.out.println("Debug set to true");
+                return false;
+            }
         }
         catch (Exception o) {
             System.out.println("Debug set to false");
             return false;
         }
+        return false;
     }
 
 	public static void main(String[] args){
@@ -41,8 +49,10 @@ public class Compiler {
             scanner  = new Scanner(source);
             reporter = new ErrorReporter();
             parser   = new Parser(scanner, reporter, debug);
+            display  = new ASTDisplay();
+            
             System.out.println("Starting syntactic analysis...");
-            parser.parseProgram();
+            result = parser.parse();
             System.out.println("Syntactic analysis complete");
 
             if (reporter.numErrors > 0) {
@@ -51,6 +61,7 @@ public class Compiler {
             }
             else {
                 System.out.println("Valid Program");
+                display.showTree(result);
                 System.exit(0);
             }
         } 

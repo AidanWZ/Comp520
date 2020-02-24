@@ -8,6 +8,7 @@ public interface Visitor<Inh,Syn> {
 	// Expressions
 	public Syn visitBinExpr(BinExpr expr, Inh arg);
 	public Syn visitNumExpr(NumExpr expr, Inh arg);
+	public Syn visitUnaryExpr(UnaryExpr expr, Inh arg);
 }
 
 

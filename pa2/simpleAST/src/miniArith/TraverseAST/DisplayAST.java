@@ -18,6 +18,12 @@ public class DisplayAST implements Visitor<Object, String> {
     public String visitNumExpr(NumExpr e, Object arg) {
     	return e.num.spelling;
     }
+
+    @Override
+    public String visitUnaryExpr(UnaryExpr expr, Object arg) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }
 
 

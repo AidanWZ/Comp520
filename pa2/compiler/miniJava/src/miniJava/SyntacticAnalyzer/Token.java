@@ -2,11 +2,11 @@ package miniJava.SyntacticAnalyzer;
 
 import miniJava.SyntacticAnalyzer.SourcePosition;
 
-final class Token extends Object {
+public final class Token extends Object {
 
-	protected int kind;
-	protected String spelling;
-	protected SourcePosition position;
+	public int kind;
+	public String spelling;
+	public SourcePosition position;
 
 	public Token(int kind, String spelling, SourcePosition position) {
 		this.kind = kind;
@@ -111,13 +111,11 @@ final class Token extends Object {
 	public final static String[] unop = {"-", "!"};
 
 	public static boolean isBinop(String op){
-		for(int i = 0; i < binop.length; i++)
+		for(int i = 0; i < binop.length; i++) {
 			if(binop[i].equals(op)) {
 				return true;
 			}
-			else {
-				return false;
-			}
+		}
 		return false;
 	}
 	private final static int	
@@ -128,9 +126,6 @@ final class Token extends Object {
 		for(int i = 0; i < unop.length; i++) {
 			if(unop[i].equals(op)) {
 				return true;
-			}
-			else {
-				return false;
 			}
 		}
 		return false;
