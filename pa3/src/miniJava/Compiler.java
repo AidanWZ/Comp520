@@ -7,6 +7,7 @@ import miniJava.SyntacticAnalyzer.SyntaxError;
 import miniJava.ErrorReporter;
 import miniJava.AbstractSyntaxTrees.AST;
 import miniJava.AbstractSyntaxTrees.ASTDisplay;
+import miniJava.AbstractSyntaxTrees.ASTIdentify;
 
 public class Compiler {
 
@@ -17,6 +18,7 @@ public class Compiler {
     private static ErrorReporter reporter;
     private static ASTDisplay display;
     private static AST result;
+    private static ASTIdentify identifier;
     
     public static boolean getDebugLevel(String[] args) {
         try {
@@ -50,18 +52,21 @@ public class Compiler {
             reporter = new ErrorReporter();
             parser   = new Parser(scanner, reporter, debug);
             display  = new ASTDisplay();
+            identifier = new ASTIdentify();
             
             System.out.println("Starting syntactic analysis...");
             result = parser.parse();
+            System.out.println("Starting Identification...");
+            String idErrors = identifier.visit(result);
             System.out.println("Syntactic analysis complete");
 
-            if (reporter.numErrors > 0) {
-                System.out.println("Invalid program");
+            if (reporter.numErrors > 0 || idErrors != null) {
+                System.out.println(idErrors);
                 System.exit(4);                
             }
             else {
                 System.out.println("Valid Program");
-                display.showTree(result);
+                if(debug) display.showTree(result);
                 System.exit(0);
             }
         } 

@@ -19,6 +19,7 @@ public final class Token extends Object {
 			for(int kindCount = firstReservedWord; kindCount <= lastReservedWord; kindCount++){
 				if(spelling.equals(tokenTable[kindCount])){
 					this.kind = kindCount;
+					//if (this.kind == Token.NULL) {System.out.println("yes");}
 					break;
 				}
 			}
@@ -56,20 +57,21 @@ public final class Token extends Object {
 		FALSE = 16, 
 		IF = 17, 
 		ELSE = 18, 
-		WHILE = 19, 
-		EQUALS = 20,
-		PERIOD = 21,
-		COLON = 22, 
-		SEMICOLON = 23, 
-		COMMA = 24, 
-		LPAREN = 25, 
-		RPAREN = 26, 
-		LBRACKET = 27, 
-		RBRACKET = 28, 
-		LCURLY = 29, 
-		RCURLY = 30, 
-		EOT = 31, 
-		ERROR = 32; 
+		NULL = 19,
+		WHILE = 20, 
+		EQUALS = 21,
+		PERIOD = 22,
+		COLON = 23, 
+		SEMICOLON = 24, 
+		COMMA = 25, 
+		LPAREN = 26, 
+		RPAREN = 27, 
+		LBRACKET = 28, 
+		RBRACKET = 29, 
+		LCURLY = 30, 
+		RCURLY = 31, 
+		EOT = 32, 
+		ERROR = 33; 
 	
 	public static String[] tokenTable = new String[] {
 		"<id>", 
@@ -91,6 +93,7 @@ public final class Token extends Object {
 		"false", 
 		"if", 
 		"else",
+		"null",
 		"while",
 		"=", 
 		".", 

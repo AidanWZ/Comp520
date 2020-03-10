@@ -17,6 +17,10 @@ public class BlockStmt extends Statement
     public <A,R> R visit(Visitor<A,R> v, A o) {
         return v.visitBlockStmt(this, o);
     }
+
+    public <R> void visit(Traveller<R> v) {
+        v.visitBlockStmt(this);
+    }
    
     public StatementList sl;
 }

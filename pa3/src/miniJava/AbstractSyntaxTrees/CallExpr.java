@@ -18,6 +18,10 @@ public class CallExpr extends Expression
     public <A,R> R visit(Visitor<A,R> v, A o) {
         return v.visitCallExpr(this, o);
     }
+
+    public <R> void visit(Traveller<R> v) {
+        v.visitCallExpr(this);
+    }
     
     public Reference functionRef;
     public ExprList argList;

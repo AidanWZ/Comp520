@@ -26,6 +26,10 @@ public class IfStmt extends Statement
     public <A,R> R visit(Visitor<A,R> v, A o) {
         return v.visitIfStmt(this, o);
     }
+
+    public <R> void visit(Traveller<R> v) {
+        v.visitIfStmt(this);
+      }
     
     public Expression cond;
     public Statement thenStmt;

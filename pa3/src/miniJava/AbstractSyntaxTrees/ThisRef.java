@@ -13,9 +13,12 @@ public class ThisRef extends BaseRef {
 		super(posn);
 	}
 
-	@Override
 	public <A, R> R visit(Visitor<A, R> v, A o) {
 		return v.visitThisRef(this, o);
 	}
+
+	public <R> void visit(Traveller<R> v) {
+        v.visitThisRef(this);
+    }
 	
 }

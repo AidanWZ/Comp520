@@ -18,5 +18,9 @@ public class ClassType extends TypeDenoter
         return v.visitClassType(this, o);
     }
 
+    public <R> void visit(Traveller<R> v) {
+        v.visitClassType(this);
+    }
+
     public Identifier className;
 }

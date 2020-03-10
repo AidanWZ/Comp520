@@ -14,6 +14,10 @@ public class IntLiteral extends Terminal {
   }
  
   public <A,R> R visit(Visitor<A,R> v, A o) {
-      return v.visitIntLiteral(this, o);
+    return v.visitIntLiteral(this, o);
+  }
+
+  public <R> void visit(Traveller<R> v) {
+    v.visitIntLiteral(this);
   }
 }

@@ -23,5 +23,7 @@ public abstract class AST {
 
   public abstract <A,R> R visit(Visitor<A,R> v, A o);
 
+  public abstract <R> void visit(Traveller<R> v);
+
   public SourcePosition posn;
 }

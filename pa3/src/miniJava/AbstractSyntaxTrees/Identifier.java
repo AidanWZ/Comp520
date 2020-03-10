@@ -16,7 +16,11 @@ public class Identifier extends Terminal {
   }
 
   public <A,R> R visit(Visitor<A,R> v, A o) {
-      return v.visitIdentifier(this, o);
+    return v.visitIdentifier(this, o);
+  }
+
+  public <R> void visit(Traveller<R> v) {
+    v.visitIdentifier(this);
   }
 
 }

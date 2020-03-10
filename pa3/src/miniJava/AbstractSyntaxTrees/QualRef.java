@@ -20,6 +20,10 @@ public class QualRef extends Reference {
 		return v.visitQRef(this, o);
 	}
 
+	public <R> void visit(Traveller<R> v) {
+        v.visitQRef(this);
+    }
+
 	public Reference ref;
 	public Identifier id;
 }

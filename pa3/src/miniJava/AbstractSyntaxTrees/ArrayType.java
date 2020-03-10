@@ -17,7 +17,11 @@ public class ArrayType extends TypeDenoter {
 	        
 	    public <A,R> R visit(Visitor<A,R> v, A o) {
 	        return v.visitArrayType(this, o);
-	    }
+		}
+		
+		public <R> void visit(Traveller<R> v) {
+			v.visitArrayType(this);
+		}
 
 	    public TypeDenoter eltType;
 	}

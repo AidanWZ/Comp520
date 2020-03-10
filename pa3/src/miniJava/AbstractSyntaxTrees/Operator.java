@@ -14,6 +14,10 @@ public class Operator extends Terminal {
   }
 
   public <A,R> R visit(Visitor<A,R> v, A o) {
-      return v.visitOperator(this, o);
+    return v.visitOperator(this, o);
+  }
+
+  public <R> void visit(Traveller<R> v) {
+    v.visitOperator(this);
   }
 }

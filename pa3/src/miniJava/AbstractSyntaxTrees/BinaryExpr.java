@@ -19,6 +19,10 @@ public class BinaryExpr extends Expression
     public <A,R> R visit(Visitor<A,R> v, A o) {
         return v.visitBinaryExpr(this, o);
     }
+
+    public <R> void visit(Traveller<R> v) {
+        v.visitBinaryExpr(this);
+    }
     
     public Operator operator;
     public Expression left;

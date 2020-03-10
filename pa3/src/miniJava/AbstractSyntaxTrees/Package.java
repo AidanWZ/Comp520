@@ -18,5 +18,9 @@ public class Package extends AST {
         return v.visitPackage(this, o);
     }
 
+    public <R> void visit(Traveller<R> v) {
+			v.visitPackage(this);
+		}
+
     public ClassDeclList classDeclList;
 }

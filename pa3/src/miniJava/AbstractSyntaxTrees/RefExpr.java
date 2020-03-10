@@ -18,5 +18,9 @@ public class RefExpr extends Expression
         return v.visitRefExpr(this, o);
     }
 
+    public <R> void visit(Traveller<R> v) {
+        v.visitRefExpr(this);
+    }
+
     public Reference ref;
 }

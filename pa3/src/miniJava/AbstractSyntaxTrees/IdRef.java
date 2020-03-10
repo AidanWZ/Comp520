@@ -18,5 +18,9 @@ public class IdRef extends BaseRef {
 		return v.visitIdRef(this, o);
 	}
 
+	public <R> void visit(Traveller<R> v) {
+        v.visitIdRef(this);
+    }
+
 	public Identifier id;
 }

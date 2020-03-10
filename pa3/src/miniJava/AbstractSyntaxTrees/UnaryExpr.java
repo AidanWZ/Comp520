@@ -19,6 +19,10 @@ public class UnaryExpr extends Expression
         return v.visitUnaryExpr(this, o);
     }
 
+    public <R> void visit(Traveller<R> v) {
+        v.visitUnaryExpr(this);
+    }
+
     public Operator operator;
     public Expression expr;
 }

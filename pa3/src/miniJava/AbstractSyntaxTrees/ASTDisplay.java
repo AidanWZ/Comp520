@@ -306,6 +306,11 @@ public class ASTDisplay implements Visitor<String,Object> {
         expr.sizeExpr.visit(this, indent(arg));
         return null;
     }
+
+    public Object visitNewStringExpr(NewStringExpr expr, String arg) {
+        show(arg, expr);
+        return null;
+    }
     
     public Object visitNewObjectExpr(NewObjectExpr expr, String arg){
         show(arg, expr);
@@ -313,6 +318,10 @@ public class ASTDisplay implements Visitor<String,Object> {
         return null;
     }
     
+    public Object visitNullExpr(NullExpr expr, String arg) {
+        show(arg, expr);
+        return null;
+    }
 
 	///////////////////////////////////////////////////////////////////////////////
 	//

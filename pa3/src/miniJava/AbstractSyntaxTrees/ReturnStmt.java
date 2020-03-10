@@ -18,5 +18,9 @@ public class ReturnStmt extends Statement
 		return v.visitReturnStmt(this, o);
 	}
 
+	public <R> void visit(Traveller<R> v) {
+		v.visitReturnStmt(this);
+	  }
+
 	public Expression returnExpr;
 }	

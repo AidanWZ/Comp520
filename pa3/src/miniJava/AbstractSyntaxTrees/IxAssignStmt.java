@@ -19,6 +19,10 @@ public class IxAssignStmt extends Statement
     public <A,R> R visit(Visitor<A,R> v, A o) {
         return v.visitIxAssignStmt(this, o);
     }
+
+    public <R> void visit(Traveller<R> v) {
+        v.visitIxAssignStmt(this);
+      }
     
     public Reference ref;
     public Expression ix;

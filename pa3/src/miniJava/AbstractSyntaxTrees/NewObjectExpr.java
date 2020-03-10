@@ -17,6 +17,10 @@ public class NewObjectExpr extends NewExpr
     public <A,R> R visit(Visitor<A,R> v, A o) {
         return v.visitNewObjectExpr(this, o);
     }
+
+    public <R> void visit(Traveller<R> v) {
+        v.visitNewObjectExpr(this);
+    }
     
     public ClassType classtype;
 }

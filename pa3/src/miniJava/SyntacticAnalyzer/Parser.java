@@ -38,6 +38,7 @@ import miniJava.AbstractSyntaxTrees.MethodDecl;
 import miniJava.AbstractSyntaxTrees.MethodDeclList;
 import miniJava.AbstractSyntaxTrees.NewArrayExpr;
 import miniJava.AbstractSyntaxTrees.NewObjectExpr;
+import miniJava.AbstractSyntaxTrees.NullExpr;
 import miniJava.AbstractSyntaxTrees.Operator;
 import miniJava.AbstractSyntaxTrees.Package;
 import miniJava.AbstractSyntaxTrees.ParameterDecl;
@@ -826,8 +827,13 @@ public class Parser {
 				else {
 					return new RefExpr(ref, current.position);
 				}
+			case Token.NULL:
+				current = currentToken;
+				acceptIt();
+				return new NullExpr(current.position);
 			default:
 				current = currentToken;
+				System.out.println("Here-----------------------"  + current.spelling);
 				Reference r = parseReference();
 				if(currentToken.kind == Token.LPAREN) {
 					acceptIt();

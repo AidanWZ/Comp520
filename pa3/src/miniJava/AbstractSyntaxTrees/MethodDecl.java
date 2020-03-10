@@ -18,6 +18,10 @@ public class MethodDecl extends MemberDecl {
 	public <A, R> R visit(Visitor<A, R> v, A o) {
         return v.visitMethodDecl(this, o);
     }
+
+    public <R> void visit(Traveller<R> v) {
+        v.visitMethodDecl(this);
+      }
 	
 	public ParameterDeclList parameterDeclList;
 	public StatementList statementList;

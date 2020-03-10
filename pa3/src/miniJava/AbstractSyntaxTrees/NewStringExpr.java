@@ -7,21 +7,19 @@ package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.SourcePosition;
 
-public class NewArrayExpr extends NewExpr
+public class NewStringExpr extends NewExpr
 {
-    public NewArrayExpr(TypeDenoter et, Expression e, SourcePosition posn){
+    public NewStringExpr(Expression e, SourcePosition posn){
         super(posn);
-        eltType = et;
-        sizeExpr = e;
     }
     
     public <A,R> R visit(Visitor<A,R> v, A o) {
-        return v.visitNewArrayExpr(this, o);
+        return v.visitNewStringExpr(this, o);
     }
 
     public <R> void visit(Traveller<R> v) {
-        v.visitNewArrayExpr(this);
-    }
+        v.visitNewStringExpr(this);
+      }
 
     public TypeDenoter eltType;
     public Expression sizeExpr;

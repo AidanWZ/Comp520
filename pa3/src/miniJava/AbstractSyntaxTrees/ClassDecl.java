@@ -18,6 +18,10 @@ public class ClassDecl extends Declaration {
   public <A,R> R visit(Visitor<A, R> v, A o) {
       return v.visitClassDecl(this, o);
   }
+
+  public <R> void visit(Traveller<R> v) {
+    v.visitClassDecl(this);
+  }
       
   public FieldDeclList fieldDeclList;
   public MethodDeclList methodDeclList;

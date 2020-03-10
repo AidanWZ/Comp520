@@ -18,5 +18,9 @@ public class LiteralExpr extends Expression
         return v.visitLiteralExpr(this, o);
     }
 
+    public <R> void visit(Traveller<R> v) {
+        v.visitLiteralExpr(this);
+    }
+
     public Terminal lit;
 }

@@ -18,6 +18,10 @@ public class CallStmt extends Statement
     public <A,R> R visit(Visitor<A,R> v, A o) {
         return v.visitCallStmt(this, o);
     }
+
+    public <R> void visit(Traveller<R> v) {
+        v.visitCallStmt(this);
+    }
     
     public Reference methodRef;
     public ExprList argList;

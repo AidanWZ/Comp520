@@ -16,4 +16,8 @@ public class BaseType extends TypeDenoter
     public <A,R> R visit(Visitor<A,R> v, A o) {
         return v.visitBaseType(this, o);
     }
+
+    public <R> void visit(Traveller<R> v) {
+        v.visitBaseType(this);
+      }
 }

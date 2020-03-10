@@ -18,6 +18,10 @@ public class AssignStmt extends Statement
     public <A,R> R visit(Visitor<A,R> v, A o) {
         return v.visitAssignStmt(this, o);
     }
+
+    public <R> void visit(Traveller<R> v) {
+        v.visitAssignStmt(this);
+      }
     
     public Reference ref;
     public Expression val;

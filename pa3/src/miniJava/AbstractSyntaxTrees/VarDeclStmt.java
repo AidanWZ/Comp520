@@ -19,6 +19,10 @@ public class VarDeclStmt extends Statement
         return v.visitVardeclStmt(this, o);
     }
 
+    public <R> void visit(Traveller<R> v) {
+        v.visitVardeclStmt(this);
+      }
+
     public VarDecl varDecl;
     public Expression initExp;
 }

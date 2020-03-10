@@ -19,6 +19,10 @@ public class WhileStmt extends Statement
         return v.visitWhileStmt(this, o);
     }
 
+    public <R> void visit(Traveller<R> v) {
+        v.visitWhileStmt(this);
+      }
+
     public Expression cond;
     public Statement body;
 }
