@@ -1,8 +1,3 @@
-class tester {
-
-    public int method() {
-        int derp = 5;
-        return derp;
-    }
-    
-}
+class System { public static _PrintStream out; }
+class _PrintStream { public void println(int n){}; }
+class String { }

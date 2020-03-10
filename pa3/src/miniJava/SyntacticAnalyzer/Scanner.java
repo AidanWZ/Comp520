@@ -107,7 +107,7 @@ public final class Scanner {
 	}
 
 	private int scanToken() {
-		if(isLetter(currentChar)){
+		if(isLetter(currentChar) || currentChar == '_'){
 			takeIt();
 			while (isLetter(currentChar) || isDigit(currentChar) || currentChar == '_') {
 				takeIt();

@@ -5,6 +5,12 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import java.util.HashMap;
+import java.util.Stack;
+
+import miniJava.SyntacticAnalyzer.SourcePosition;
+import miniJava.SyntacticAnalyzer.Token;
+
 /*
  * Display AST in text form, one node per line, using indentation to show 
  * subordinate nodes below a parent node.
@@ -19,6 +25,32 @@ package miniJava.AbstractSyntaxTrees;
  *   The display is produced by printing a line of output at each node visited.
  */
 public class ASTIdentify implements Traveller<String> {
+
+    public Stack<HashMap<String,Declaration>> scopeIdentificationTable;
+
+    public ASTIdentify() {
+        this.scopeIdentificationTable = new Stack<HashMap<String, Declaration>>();
+        HashMap<String, Declaration> temp = new HashMap<String, Declaration>();
+
+        FieldDeclList tempFieldsList;
+        MethodDeclList tempMethodsList;
+        ParameterDeclList tempParameterList;
+        
+        tempFieldsList = new FieldDeclList();
+        tempFieldsList.add(new FieldDecl(false, true, new ClassType(new Identifier(new Token(0, "System", new SourcePosition(0,0))), new SourcePosition(0, 0)), "System", new SourcePosition(0, 0)));
+        temp.put("System", new ClassDecl("System", null, null, new SourcePosition(0, 0)));
+
+        tempMethodsList = new MethodDeclList();
+        tempParameterList = new ParameterDeclList();
+        tempParameterList.add(new ParameterDecl(new BaseType(TypeKind.INT, new SourcePosition(0,0)), "x", new SourcePosition(0,0)));
+        tempMethodsList.add(new MethodDecl(null, tempParameterList, new StatementList(), new SourcePosition(0,0)));
+        temp.put("_PrintStream", new ClassDecl("_PrintStream", null, tempMethodsList, new SourcePosition(0,0)));
+        
+        temp.put("System", new ClassDecl("System", null, null, new SourcePosition(0, 0)));
+        
+        scopeIdentificationTable.add(temp);
+        System.out.println(scopeIdentificationTable.size());
+    }
 
     public String visit(AST ast) {
         ast.visit(this);

@@ -60,9 +60,15 @@ public class Compiler {
             String idErrors = identifier.visit(result);
             System.out.println("Syntactic analysis complete");
 
-            if (reporter.numErrors > 0 || idErrors != null) {
-                System.out.println(idErrors);
-                System.exit(4);                
+            if (reporter.numErrors > 0) {
+                if (idErrors != null) {
+                    System.out.println(idErrors);
+                    System.exit(4);   
+                }    
+                else {
+                    System.out.println("Parse errors occcurred");
+                    System.exit(4); 
+                }         
             }
             else {
                 System.out.println("Valid Program");

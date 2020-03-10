@@ -6,7 +6,6 @@
 package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.Token;
-import miniJava.SyntacticAnalyzer.TokenKind;
 
 abstract public class Terminal extends AST {
 

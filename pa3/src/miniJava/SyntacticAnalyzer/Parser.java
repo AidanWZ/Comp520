@@ -833,7 +833,6 @@ public class Parser {
 				return new NullExpr(current.position);
 			default:
 				current = currentToken;
-				System.out.println("Here-----------------------"  + current.spelling);
 				Reference r = parseReference();
 				if(currentToken.kind == Token.LPAREN) {
 					acceptIt();
