@@ -1,3 +1,6 @@
-class System { public static _PrintStream out; }
-class _PrintStream { public void println(int n){}; }
-class String { }
+class Tester {
+    private int foo;
+    public int changer(int bar) {
+        return foo;
+    }
+}

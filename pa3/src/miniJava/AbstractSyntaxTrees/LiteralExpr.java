@@ -6,6 +6,7 @@
 package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.SourcePosition;
+import miniJava.SyntacticAnalyzer.TypeError;
 
 public class LiteralExpr extends Expression
 {
@@ -18,7 +19,7 @@ public class LiteralExpr extends Expression
         return v.visitLiteralExpr(this, o);
     }
 
-    public <R> void visit(Traveller<R> v) {
+    public <R> void visit(Traveller<R> v) throws TypeError {
         v.visitLiteralExpr(this);
     }
 

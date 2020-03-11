@@ -6,6 +6,7 @@
 package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.SourcePosition;
+import miniJava.SyntacticAnalyzer.TypeError;
 
 public class BaseType extends TypeDenoter
 {
@@ -17,7 +18,7 @@ public class BaseType extends TypeDenoter
         return v.visitBaseType(this, o);
     }
 
-    public <R> void visit(Traveller<R> v) {
+    public <R> void visit(Traveller<R> v) throws TypeError {
         v.visitBaseType(this);
       }
 }

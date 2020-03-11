@@ -7,6 +7,7 @@
 package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.SourcePosition;
+import miniJava.SyntacticAnalyzer.TypeError;
 
 public class ArrayType extends TypeDenoter {
 
@@ -19,7 +20,7 @@ public class ArrayType extends TypeDenoter {
 	        return v.visitArrayType(this, o);
 		}
 		
-		public <R> void visit(Traveller<R> v) {
+		public <R> void visit(Traveller<R> v) throws TypeError {
 			v.visitArrayType(this);
 		}
 

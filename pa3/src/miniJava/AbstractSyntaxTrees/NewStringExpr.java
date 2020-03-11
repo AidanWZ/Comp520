@@ -6,6 +6,7 @@
 package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.SourcePosition;
+import miniJava.SyntacticAnalyzer.TypeError;
 
 public class NewStringExpr extends NewExpr
 {
@@ -17,7 +18,7 @@ public class NewStringExpr extends NewExpr
         return v.visitNewStringExpr(this, o);
     }
 
-    public <R> void visit(Traveller<R> v) {
+    public <R> void visit(Traveller<R> v) throws TypeError {
         v.visitNewStringExpr(this);
       }
 

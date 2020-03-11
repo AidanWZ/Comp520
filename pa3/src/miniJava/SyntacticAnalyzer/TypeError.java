@@ -1,11 +1,11 @@
 package miniJava.SyntacticAnalyzer;
 
-public class SyntaxError extends Exception {
+public class TypeError extends Exception {
 	private static final long serialVersionUID = 2583239898992018218L;
-	public SyntaxError() {
+	public TypeError() {
 		super();
 	};
-	public SyntaxError (String s) {
+	public TypeError (String s) {
 		super(s);
 	}
 

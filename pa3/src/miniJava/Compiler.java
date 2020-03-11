@@ -4,6 +4,7 @@ import miniJava.SyntacticAnalyzer.Scanner;
 import miniJava.SyntacticAnalyzer.Parser;
 import miniJava.SyntacticAnalyzer.SourceFile;
 import miniJava.SyntacticAnalyzer.SyntaxError;
+import miniJava.SyntacticAnalyzer.TypeError;
 import miniJava.ErrorReporter;
 import miniJava.AbstractSyntaxTrees.AST;
 import miniJava.AbstractSyntaxTrees.ASTDisplay;
@@ -15,7 +16,8 @@ public class Compiler {
 
 	private static Scanner scanner;
 	private static Parser parser;
-    private static ErrorReporter reporter;
+    private static ErrorReporter parseReporter;
+    private static ErrorReporter typeReporter;
     private static ASTDisplay display;
     private static AST result;
     private static ASTIdentify identifier;
@@ -49,10 +51,11 @@ public class Compiler {
         
 		try {
             scanner  = new Scanner(source);
-            reporter = new ErrorReporter();
-            parser   = new Parser(scanner, reporter, debug);
+            parseReporter = new ErrorReporter();
+            typeReporter = new ErrorReporter();
+            parser   = new Parser(scanner, parseReporter, debug);
             display  = new ASTDisplay();
-            identifier = new ASTIdentify();
+            identifier = new ASTIdentify(typeReporter);
             
             System.out.println("Starting syntactic analysis...");
             result = parser.parse();
@@ -60,15 +63,18 @@ public class Compiler {
             String idErrors = identifier.visit(result);
             System.out.println("Syntactic analysis complete");
 
-            if (reporter.numErrors > 0) {
-                if (idErrors != null) {
-                    System.out.println(idErrors);
+            if (parseReporter.numErrors > 0) {
+                if (identifier.reporter.numErrors > 0) {
                     System.exit(4);   
                 }    
                 else {
-                    System.out.println("Parse errors occcurred");
+                    //System.out.println("Parse errors occcurred");
                     System.exit(4); 
                 }         
+            }
+            else if (parseReporter.numErrors == 0 && identifier.reporter.numErrors > 0) {
+                //System.out.println("Type checking errors occcurred");
+                System.exit(4);   
             }
             else {
                 System.out.println("Valid Program");
@@ -78,6 +84,10 @@ public class Compiler {
         } 
         catch (SyntaxError e) {
             System.out.println("Syntax error occurred");
+			System.exit(4);
+        }
+        catch (TypeError e) {
+            System.out.println("Type error occurred");
 			System.exit(4);
         }
         catch (Exception e) {

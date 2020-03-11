@@ -6,6 +6,7 @@
 package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.SourcePosition;
+import miniJava.SyntacticAnalyzer.TypeError;
 
 public class IxAssignStmt extends Statement
 {
@@ -20,7 +21,7 @@ public class IxAssignStmt extends Statement
         return v.visitIxAssignStmt(this, o);
     }
 
-    public <R> void visit(Traveller<R> v) {
+    public <R> void visit(Traveller<R> v) throws TypeError {
         v.visitIxAssignStmt(this);
       }
     

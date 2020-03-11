@@ -6,6 +6,7 @@
 package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.Token;
+import miniJava.SyntacticAnalyzer.TypeError;
 
 public class IntLiteral extends Terminal {
 
@@ -17,7 +18,7 @@ public class IntLiteral extends Terminal {
     return v.visitIntLiteral(this, o);
   }
 
-  public <R> void visit(Traveller<R> v) {
+  public <R> void visit(Traveller<R> v) throws TypeError {
     v.visitIntLiteral(this);
   }
 }

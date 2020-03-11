@@ -15,6 +15,10 @@ public class ErrorReporter {
 		this.numErrors++;
 	}
 
+	public void reportError(int lineNumber) {
+		System.out.println("*** line " + lineNumber + "Type Error - incompatible types assignment");
+	}
+
 	public void reportRestriction(String message) {
 		System.out.println("RESTRICTION: " + message);
 	}

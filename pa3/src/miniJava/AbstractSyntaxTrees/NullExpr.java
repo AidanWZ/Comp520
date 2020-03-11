@@ -6,6 +6,7 @@
 package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.SourcePosition;
+import miniJava.SyntacticAnalyzer.TypeError;
 
 public class NullExpr extends Expression {
 	
@@ -17,7 +18,7 @@ public class NullExpr extends Expression {
         return v.visitNullExpr(this, o);
 	}
 	
-	public <R> void visit(Traveller<R> v) {
+	public <R> void visit(Traveller<R> v) throws TypeError {
         v.visitNullExpr(this);
     }
 }
