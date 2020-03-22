@@ -7,6 +7,7 @@ package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.SourcePosition;
 import miniJava.SyntacticAnalyzer.TypeError;
+import miniJava.SyntacticAnalyzer.IdentificationError;
 
 public class FieldDecl extends MemberDecl {
 	
@@ -22,7 +23,7 @@ public class FieldDecl extends MemberDecl {
         return v.visitFieldDecl(this, o);
 	}
 	
-	public <R> void visit(Traveller<R> v) throws TypeError {
+	public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
 		v.visitFieldDecl(this);
 	  }
 }

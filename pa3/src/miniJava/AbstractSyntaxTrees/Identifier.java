@@ -7,6 +7,7 @@ package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.Token;
 import miniJava.SyntacticAnalyzer.TypeError;
+import miniJava.SyntacticAnalyzer.IdentificationError;
 
 public class Identifier extends Terminal {
 
@@ -20,7 +21,7 @@ public class Identifier extends Terminal {
     return v.visitIdentifier(this, o);
   }
 
-  public <R> void visit(Traveller<R> v) throws TypeError {
+  public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
     v.visitIdentifier(this);
   }
 

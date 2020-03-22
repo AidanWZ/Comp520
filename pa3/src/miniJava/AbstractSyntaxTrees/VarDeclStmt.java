@@ -5,22 +5,22 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.SyntacticAnalyzer.IdentificationError;
 import miniJava.SyntacticAnalyzer.SourcePosition;
 import miniJava.SyntacticAnalyzer.TypeError;
 
-public class VarDeclStmt extends Statement
-{
-    public VarDeclStmt(VarDecl vd, Expression e, SourcePosition posn){
+public class VarDeclStmt extends Statement {
+    public VarDeclStmt(VarDecl vd, Expression e, SourcePosition posn) {
         super(posn);
         varDecl = vd;
         initExp = e;
     }
-        
-    public <A,R> R visit(Visitor<A,R> v, A o) {
+
+    public <A, R> R visit(Visitor<A, R> v, A o) {
         return v.visitVardeclStmt(this, o);
     }
 
-    public <R> void visit(Traveller<R> v) throws TypeError {
+    public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
         v.visitVardeclStmt(this);
       }
 

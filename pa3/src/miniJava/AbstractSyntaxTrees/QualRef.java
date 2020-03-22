@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.SyntacticAnalyzer.IdentificationError;
 import miniJava.SyntacticAnalyzer.SourcePosition;
 import miniJava.SyntacticAnalyzer.TypeError;
 
@@ -21,7 +22,7 @@ public class QualRef extends Reference {
 		return v.visitQRef(this, o);
 	}
 
-	public <R> void visit(Traveller<R> v) throws TypeError {
+	public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
         v.visitQRef(this);
     }
 

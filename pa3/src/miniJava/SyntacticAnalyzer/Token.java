@@ -7,11 +7,32 @@ public final class Token extends Object {
 	public int kind;
 	public String spelling;
 	public SourcePosition position;
+	public int lineNumber;
+	public int charNumber;
 
 	public Token(int kind, String spelling, SourcePosition position) {
 		this.kind = kind;
 		this.spelling = spelling;
 		this.position = position;
+		
+		if (kind == Token.IDENTIFIER) {
+			//Iterate through all the tokens and if we find that token then exit the loop
+			
+			for(int kindCount = firstReservedWord; kindCount <= lastReservedWord; kindCount++){
+				if(spelling.equals(tokenTable[kindCount])){
+					this.kind = kindCount;
+					//if (this.kind == Token.NULL) {System.out.println("yes");}
+					break;
+				}
+			}
+		}
+	}
+
+	public Token(int kind, String spelling, int lineNumber, int charNumber) {
+		this.kind = kind;
+		this.spelling = spelling;
+		this.lineNumber = lineNumber;
+		this.charNumber = charNumber;
 		
 		if (kind == Token.IDENTIFIER) {
 			//Iterate through all the tokens and if we find that token then exit the loop
@@ -52,26 +73,27 @@ public final class Token extends Object {
 		INT = 11, 
 		BOOLEAN = 12, 
 		VOID = 13, 
-		THIS = 14, 
-		TRUE = 15, 
-		FALSE = 16, 
-		IF = 17, 
-		ELSE = 18, 
-		NULL = 19,
-		WHILE = 20, 
-		EQUALS = 21,
-		PERIOD = 22,
-		COLON = 23, 
-		SEMICOLON = 24, 
-		COMMA = 25, 
-		LPAREN = 26, 
-		RPAREN = 27, 
-		LBRACKET = 28, 
-		RBRACKET = 29, 
-		LCURLY = 30, 
-		RCURLY = 31, 
-		EOT = 32, 
-		ERROR = 33; 
+		STRING = 14,
+		THIS = 15, 
+		TRUE = 16, 
+		FALSE = 17, 
+		IF = 18, 
+		ELSE = 19, 
+		NULL = 20,
+		WHILE = 21, 
+		EQUALS = 22,
+		PERIOD = 23,
+		COLON = 24, 
+		SEMICOLON = 25, 
+		COMMA = 26, 
+		LPAREN = 27, 
+		RPAREN = 28, 
+		LBRACKET = 29, 
+		RBRACKET = 30, 
+		LCURLY = 31, 
+		RCURLY = 32, 
+		EOT = 33, 
+		ERROR = 34; 
 	
 	public static String[] tokenTable = new String[] {
 		"<id>", 
@@ -88,6 +110,7 @@ public final class Token extends Object {
 		"int", 
 		"boolean", 
 		"void", 
+		"String",
 		"this", 
 		"true", 
 		"false", 

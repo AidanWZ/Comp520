@@ -7,6 +7,7 @@ package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.Token;
 import miniJava.SyntacticAnalyzer.TypeError;
+import miniJava.SyntacticAnalyzer.IdentificationError;
 
 public class BooleanLiteral extends Terminal {
 
@@ -18,7 +19,7 @@ public class BooleanLiteral extends Terminal {
       return v.visitBooleanLiteral(this, o);
   }
 
-  public <R> void visit(Traveller<R> v) throws TypeError {
+  public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
     v.visitBooleanLiteral(this);
   }
 }

@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.SyntacticAnalyzer.IdentificationError;
 import miniJava.SyntacticAnalyzer.Token;
 import miniJava.SyntacticAnalyzer.TypeError;
 
@@ -18,7 +19,7 @@ public class Operator extends Terminal {
     return v.visitOperator(this, o);
   }
 
-  public <R> void visit(Traveller<R> v) throws TypeError {
+  public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
     v.visitOperator(this);
   }
 }

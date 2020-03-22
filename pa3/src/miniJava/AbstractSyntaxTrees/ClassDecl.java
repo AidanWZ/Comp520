@@ -7,6 +7,7 @@ package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.SourcePosition;
 import miniJava.SyntacticAnalyzer.TypeError;
+import miniJava.SyntacticAnalyzer.IdentificationError;
 
 public class ClassDecl extends Declaration {
 
@@ -20,7 +21,7 @@ public class ClassDecl extends Declaration {
       return v.visitClassDecl(this, o);
   }
 
-  public <R> void visit(Traveller<R> v) throws TypeError {
+  public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
     v.visitClassDecl(this);
   }
       

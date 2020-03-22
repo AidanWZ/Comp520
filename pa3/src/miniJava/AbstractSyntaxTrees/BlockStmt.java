@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.SyntacticAnalyzer.IdentificationError;
 import miniJava.SyntacticAnalyzer.SourcePosition;
 import miniJava.SyntacticAnalyzer.TypeError;
 
@@ -19,7 +20,7 @@ public class BlockStmt extends Statement
         return v.visitBlockStmt(this, o);
     }
 
-    public <R> void visit(Traveller<R> v) throws TypeError {
+    public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
         v.visitBlockStmt(this);
     }
    

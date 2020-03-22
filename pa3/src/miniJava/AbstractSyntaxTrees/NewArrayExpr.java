@@ -7,6 +7,7 @@ package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.SourcePosition;
 import miniJava.SyntacticAnalyzer.TypeError;
+import miniJava.SyntacticAnalyzer.IdentificationError;
 
 public class NewArrayExpr extends NewExpr
 {
@@ -20,7 +21,7 @@ public class NewArrayExpr extends NewExpr
         return v.visitNewArrayExpr(this, o);
     }
 
-    public <R> void visit(Traveller<R> v) throws TypeError {
+    public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
         v.visitNewArrayExpr(this);
     }
 
