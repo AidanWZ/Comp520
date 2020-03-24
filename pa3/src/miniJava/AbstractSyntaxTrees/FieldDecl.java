@@ -24,7 +24,7 @@ public class FieldDecl extends MemberDecl {
 	}
 	
 	public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
-		v.visitFieldDecl(this);
-	  }
+		v.visitFieldDecl(this);		
+	}
 }
 

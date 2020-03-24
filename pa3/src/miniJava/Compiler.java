@@ -102,7 +102,7 @@ public class Compiler {
             display("Starting syntactic analysis...");
             ast = parser.parse();
             displayAST();
-            display("Starting Identification...");
+            display("Starting Identification/Type Checking...");
             idErrors = identifier.visit(ast);
             display("Syntactic analysis complete");
 

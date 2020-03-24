@@ -17,4 +17,5 @@ abstract public class Terminal extends AST {
 
   public int kind;
   public String spelling;
+  public TypeKind type;
 }

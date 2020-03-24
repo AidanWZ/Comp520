@@ -6,7 +6,9 @@
 package miniJava.AbstractSyntaxTrees;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Stack;
 
 import miniJava.ErrorReporter;
@@ -35,12 +37,16 @@ public class ASTIdentify implements Traveller<String> {
     public int iteratorIndex;
     public ErrorReporter idReporter;
     public ErrorReporter typeReporter;
+    
+    public String className;
     public TypeKind returnKind;
+    public String referenceName;
 
     public ASTIdentify(ErrorReporter idReporter, ErrorReporter typeReporter) {
         this.scopeIdentificationTable = new Stack<HashMap<String, Declaration>>();
         this.idReporter = idReporter;
         this.typeReporter = typeReporter;
+        this.iteratorIndex = 0;
         
         HashMap<String, Declaration> temp = new HashMap<String, Declaration>();
 
@@ -82,7 +88,7 @@ public class ASTIdentify implements Traveller<String> {
         tempFieldsList = new FieldDeclList();
         tempMethodsList = new MethodDeclList();
         tempParameterList = new ParameterDeclList();
-        temp.put("String", new ClassDecl("System", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
+        temp.put("String", new ClassDecl("String", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
         
         //creating top level scope
         scopeIdentificationTable.add(temp);        
@@ -119,21 +125,58 @@ public class ASTIdentify implements Traveller<String> {
         }
     }
 
-    public Declaration search(String name) {
-        if (scopeIdentificationTable.get(iteratorIndex).containsKey(name)) {
-            return scopeIdentificationTable.get(iteratorIndex).get(name);
-        }
-        int counter = 0;
-        while (iterator.hasPrevious()) {
-            HashMap<String, Declaration> tmpMap = iterator.previous();
-            iteratorIndex--;
-            counter++;
-            if (tmpMap.containsKey(name)) {
-                for (int i = 0; i < counter; i++) {
-                    iterator.next();
+    public boolean isSameExprType(Expression expr1, Expression expr2) {
+        return expr1.getClass().equals(expr2.getClass());
+    }
+
+    public void displayIdTable() {
+        Iterator<HashMap<String, Declaration>> scopeIterator = scopeIdentificationTable.iterator();
+        System.out.println("==============================================");
+        System.out.println("NAME : TYPE");
+        System.out.println("==============================================");
+        boolean first = true;
+        while (scopeIterator.hasNext()) {
+            for(Map.Entry<String, Declaration> mapElement : scopeIterator.next().entrySet()) {
+                if (mapElement.getValue().type == null) {
+                    if (first) {
+                        System.out.println(mapElement.getKey() + " : " + "class");
+                    }
+                    else {
+                        System.out.println(mapElement.getKey() + " : " + mapElement.getValue());
+                    }
                 }
-                return tmpMap.get(name);
+                else {
+                    if (first) {
+                        System.out.println(mapElement.getKey() + " : " + "class");
+                    }
+                    else {
+                        System.out.println(mapElement.getKey() + " : " + mapElement.getValue().type.typeKind);
+                    }
+                }
             }
+            first = false;
+            System.out.println("==============================================");
+        }
+    }
+
+    public Declaration search(String name) {
+        int tempIndex = iteratorIndex;
+        while (tempIndex > 0) {
+            if (scopeIdentificationTable.elementAt(tempIndex).containsKey(name)) {
+                return scopeIdentificationTable.get(tempIndex).get(name);
+            }
+            tempIndex--;
+        }
+        return null;
+    }
+
+    public Declaration searchAbove(String name) {
+        int tempIndex = iteratorIndex-1;
+        while (tempIndex > 0) {
+            if (scopeIdentificationTable.elementAt(tempIndex).containsKey(name)) {
+                return scopeIdentificationTable.get(tempIndex).get(name);
+            }
+            tempIndex--;
         }
         return null;
     }
@@ -148,15 +191,47 @@ public class ASTIdentify implements Traveller<String> {
         return decl.methodDeclList;
     }
 
-    void identificationError(int lineNumber) throws IdentificationError {
-		idReporter.reportError(lineNumber);	
+    public MemberDecl findMember(String memberName) {
+        MethodDeclList classMethods = findMethods(this.className);
+        FieldDeclList classFields = findFields(this.className);
+        for(MethodDecl m: classMethods) {
+            if (m.name == memberName) {
+                return m;
+            }
+        }
+        for(FieldDecl f: classFields) {
+            if (f.name == memberName) {
+                return f;
+            }
+        }
+        return null;
+    }
+
+    public void addScope() {
+        scopeIdentificationTable.push(new HashMap<String, Declaration>());
+        iteratorIndex++;
+    }
+
+    public void removeScope() {
+        scopeIdentificationTable.pop();
+        iteratorIndex--;
+    }
+
+    void identificationError(int lineNumber, String methodName, String varName) throws IdentificationError {
+        idReporter.reportIdError(lineNumber, varName);	
+        display("Identification error in " + methodName);
 		throw(new IdentificationError());	
     }
 
-    void typeError(int lineNumber) throws TypeError {
-		typeReporter.reportError(lineNumber);	
+    void typeError(int lineNumber, String methodName) throws TypeError {
+        typeReporter.reportTypeError(lineNumber);	
+        display("Type error in " + methodName);
 		throw(new TypeError());	
     }
+
+    void display(String text) {
+		System.out.println(text);
+	}
     
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -166,58 +241,62 @@ public class ASTIdentify implements Traveller<String> {
     }
 
     public String visitPackage(Package prog) throws TypeError, IdentificationError {
-        for (ClassDecl c: prog.classDeclList) {
+        for (ClassDecl c: prog.classDeclList) {            
+            className = c.name;
             scopeIdentificationTable.peek().put(c.name, c);
-            c.visit(this);            
+            c.visit(this);  
+                      
         }    
         return "";    
     }
 
     public String visitClassDecl(ClassDecl clas) throws TypeError, IdentificationError {
-        scopeIdentificationTable.push(new HashMap<String, Declaration>());
-        for (FieldDecl f: clas.fieldDeclList) {
-            scopeIdentificationTable.peek().put(f.name, f);
-            f.visit(this);
+        addScope();
+        for (FieldDecl f: clas.fieldDeclList) { 
+            scopeIdentificationTable.peek().put(f.name, f);           
+            f.visit(this);            
         }
         for (MethodDecl m: clas.methodDeclList) {
-            returnKind = m.type.typeKind;
-            scopeIdentificationTable.peek().put(m.name, m);
+            returnKind = m.type.typeKind;  
+            scopeIdentificationTable.peek().put(m.name, m);          
             m.visit(this);
         }
-        scopeIdentificationTable.pop();
+        removeScope();
         return "";
     }
 
     public String visitFieldDecl(FieldDecl fd) throws TypeError, IdentificationError {        
-        fd.type.visit(this);    
+        fd.type.visit(this);            
         return "";
     }
 
     public String visitMethodDecl(MethodDecl m) throws TypeError, IdentificationError {
-        scopeIdentificationTable.push(new HashMap<String, Declaration>());
+        addScope();
         m.type.visit(this);
         ParameterDeclList pdl = m.parameterDeclList;
-        for (ParameterDecl pd: pdl) {
-            scopeIdentificationTable.peek().put(pd.name, pd);
+        addScope();
+        for (ParameterDecl pd: pdl) {            
             pd.visit(this);
+            scopeIdentificationTable.peek().put(pd.name, pd);
         }
         StatementList sl = m.statementList;
         for (Statement s: sl) {
             s.visit(this);
         } 
-        scopeIdentificationTable.pop();
+        removeScope();
+        removeScope();
         return "";     
     }
     
     public String visitParameterDecl(ParameterDecl pd) throws TypeError, IdentificationError {
-        scopeIdentificationTable.peek().put(pd.name, pd);
         pd.type.visit(this);
+        scopeIdentificationTable.peek().put(pd.name, pd);
         return "";
     } 
     
     public String visitVarDecl(VarDecl vd) throws TypeError, IdentificationError {
-        scopeIdentificationTable.peek().put(vd.name, vd);
         vd.type.visit(this);
+        scopeIdentificationTable.peek().put(vd.name, vd);
         return "";
     }
 
@@ -250,42 +329,55 @@ public class ASTIdentify implements Traveller<String> {
     ///////////////////////////////////////////////////////////////////////////////
 
     public String visitBlockStmt(BlockStmt stmt) throws TypeError, IdentificationError {
-        scopeIdentificationTable.push(new HashMap<String, Declaration>());
+        addScope();
         StatementList sl = stmt.sl;
         for (Statement s: sl) {
             s.visit(this);
         }
-        scopeIdentificationTable.pop();
+        removeScope();
         return "";
     }
     
-    public String visitVardeclStmt(VarDeclStmt stmt) throws TypeError, IdentificationError {
-        scopeIdentificationTable.peek().put(stmt.varDecl.name, stmt.varDecl);
+    public String visitVardeclStmt(VarDeclStmt stmt) throws TypeError, IdentificationError {     
+        if (iteratorIndex == 3 && searchAbove(stmt.varDecl.name) != null) {
+            identificationError(stmt.posn.start, "visitVardeclStmt", "duplicate local variable " + stmt.varDecl.name);
+        }
         stmt.varDecl.visit(this);
-        if (stmt.initExp != null) {
-            if (isSameType(stmt.varDecl.type.typeKind, stmt.initExp.type)) {
-                stmt.initExp.visit(this);
+        if (stmt.initExp != null) { 
+            stmt.initExp.visit(this);        
+            if (isSameType(stmt.varDecl.type.typeKind, stmt.initExp.type)) {                
+                stmt.varDecl.type.typeKind = stmt.initExp.type;
             }
             else {
-                typeError(0);
+                typeError(stmt.posn.start, "visitVarDeclStmt");
             }
         }	
         else {
             if (search(stmt.varDecl.name) != null) {
-                identificationError(0);
+                identificationError(stmt.posn.start, "visitVarDeclStmt", "variable with name " + stmt.varDecl.name + " already exists");
             }
-        }        
+            else {
+
+            }
+        }
+        scopeIdentificationTable.peek().put(stmt.varDecl.name, stmt.varDecl); 
         return "";
     }
     
     public String visitAssignStmt(AssignStmt stmt) throws TypeError, IdentificationError {
-        if (isSameType(stmt.ref.decl.type.typeKind, stmt.val.type)) {
-            stmt.ref.visit(this);
-            stmt.val.visit(this);
-        }
+        stmt.ref.visit(this);
+        stmt.val.visit(this);
+        if (search(((IdRef)stmt.ref).id.spelling) == null) {            
+            identificationError(stmt.posn.start, "visitAssignStmt", "Variable may not have been initialized");                  
+        }           
         else {
-            typeError(0);
-        }
+            if (isSameType(search(((IdRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
+                
+            }
+            else {
+                typeError(stmt.posn.start, "visitAssignStmt");
+            }
+        }        
         return "";
     }
     
@@ -299,7 +391,7 @@ public class ASTIdentify implements Traveller<String> {
             return "";
         }  
         else {
-            typeError(0);
+            typeError(stmt.posn.start, "visitIxAssignStmt");
             return "";
         }                
     }
@@ -313,28 +405,28 @@ public class ASTIdentify implements Traveller<String> {
                 e.visit(this);
             }
             else {
-                typeError(0);
+                typeError(stmt.posn.start, "visitCallStmt");
             }
         }
         return "";
     }
     
-    public String visitReturnStmt(ReturnStmt stmt) throws TypeError, IdentificationError {
-        
+    public String visitReturnStmt(ReturnStmt stmt) throws TypeError, IdentificationError {        
         if (stmt.returnExpr != null) {
+            stmt.returnExpr.visit(this);
             if (isSameType(this.returnKind, stmt.returnExpr.type)) {
-                stmt.returnExpr.visit(this);
+                
             }
             else {
-                typeError(0);
+                typeError(stmt.posn.start, "visitReturnStmt");
             }            
         }
         else if (stmt.returnExpr == null) {
-            if (isSameType(this.returnKind, stmt.returnExpr.type)) {
+            if (isSameType(this.returnKind, TypeKind.VOID)) {
 
             }
             else {
-                typeError(0);
+                typeError(stmt.posn.start, "visitReturnStmt");
             }
         }
         return "";
@@ -342,30 +434,50 @@ public class ASTIdentify implements Traveller<String> {
     
     public String visitIfStmt(IfStmt stmt) throws TypeError, IdentificationError {
         if (stmt.elseStmt == null) {
-            if (isSameType(stmt.cond.type, TypeKind.BOOLEAN)) {                
-                stmt.cond.visit(this);
-                scopeIdentificationTable.push(new HashMap<String, Declaration>());
-                stmt.thenStmt.visit(this);
-                scopeIdentificationTable.pop();
+            stmt.cond.visit(this);
+            if (isSameType(stmt.cond.type, TypeKind.BOOLEAN)) {                                
+                if (((BlockStmt) stmt.thenStmt).sl.size() == 1) {
+                    if (((BlockStmt) stmt.thenStmt).sl.get(0).getClass().equals(new VarDeclStmt(null, null, null).getClass())) {
+                        identificationError(stmt.posn.start, "visitIfStmt", "Cannot have only var declaration in conditional branch");
+                    }
+                }
+                else {
+                    addScope();
+                    stmt.thenStmt.visit(this);
+                    removeScope();
+                }
+                
                 return "";
             }
             else {
-                typeError(0);
+                typeError(stmt.posn.start, "visitIfStmt");
             }
         }
         else if (stmt.elseStmt != null) {
             if (isSameType(stmt.cond.type, TypeKind.BOOLEAN)) {
                 stmt.cond.visit(this);
-                scopeIdentificationTable.push(new HashMap<String, Declaration>());
-                stmt.thenStmt.visit(this);
-                scopeIdentificationTable.pop();
-                scopeIdentificationTable.push(new HashMap<String, Declaration>());
-                stmt.elseStmt.visit(this);
-                scopeIdentificationTable.pop();
+                if (((BlockStmt) stmt.thenStmt).sl.size() == 1) {
+                    if (((BlockStmt) stmt.thenStmt).sl.get(0).getClass().equals(new VarDeclStmt(null, null, null).getClass())) {
+                        identificationError(stmt.posn.start, "visitIfStmt", "Cannot have only var declaration in conditional branch");
+                    }
+                }
+                else if (((BlockStmt) stmt.elseStmt).sl.size() == 1) {
+                    if (((BlockStmt) stmt.elseStmt).sl.get(0).getClass().equals(new VarDeclStmt(null, null, null).getClass())) {
+                        identificationError(stmt.posn.start, "visitIfStmt", "Cannot have only var declaration in conditional branch");
+                    }
+                }
+                else {
+                    addScope();
+                    stmt.thenStmt.visit(this);
+                    removeScope();
+                    addScope();
+                    stmt.elseStmt.visit(this);
+                    removeScope();
+                }                
                 return "";
             }
             else {
-                typeError(0);
+                typeError(stmt.posn.start, "visitIfStmt");
                 return "";
             }            
         }
@@ -391,31 +503,45 @@ public class ASTIdentify implements Traveller<String> {
         if (expr.operator.spelling == "!" && isSameType(expr.expr.type, TypeKind.BOOLEAN)) {
             expr.operator.visit(this);
             expr.expr.visit(this);
+            expr.type = expr.expr.type;
         } 
         else if (expr.operator.spelling == "-" && isSameType(expr.expr.type, TypeKind.INT)) {
             expr.operator.visit(this);
             expr.expr.visit(this);
+            expr.type = expr.expr.type;
         }  
         else {
-            typeError(0);
+            typeError(expr.posn.start, "visitUnaryExpr");
         }
         return "";
     }
     
     public String visitBinaryExpr(BinaryExpr expr) throws TypeError, IdentificationError {
-        if (isSameType(expr.left.type, expr.right.type)) {
-            expr.operator.visit(this);
-            expr.left.visit(this);
-            expr.right.visit(this);
+        expr.operator.visit(this);
+        expr.left.visit(this);
+        expr.right.visit(this);
+        if (isSameType(expr.left.type, expr.right.type)) {            
+            if (expr.operator.spelling == "==") {
+                expr.type = TypeKind.BOOLEAN;
+            }
+            else {
+                expr.type = expr.left.type;
+            }            
         } 
         else {
-            typeError(0);
+            typeError(expr.posn.start, "visitBinaryExpr");
         }
         return "";
     }
     
     public String visitRefExpr(RefExpr expr) throws TypeError, IdentificationError {
         expr.ref.visit(this);
+        if (expr.ref.decl != null) {
+            expr.type = expr.ref.decl.type.typeKind;
+        }
+        else {
+            identificationError(expr.posn.start, "visitRefExpr", "variable was not initialized");
+        }
         return "";
     }
     
@@ -423,9 +549,10 @@ public class ASTIdentify implements Traveller<String> {
         if (isSameType(ie.ixExpr.type, TypeKind.INT) && isSameType(ie.type, ie.ref.decl.type.typeKind)) {
             ie.ref.visit(this);
             ie.ixExpr.visit(this);
+            ie.type = ie.ref.decl.type.typeKind;
         }
         else {
-            typeError(0);
+            typeError(ie.posn.start, "visitIxExpr");
         }
         return "";
     }
@@ -436,31 +563,42 @@ public class ASTIdentify implements Traveller<String> {
         for (Expression e: al) {
             e.visit(this);
         }   
+        expr.type = expr.functionRef.decl.type.typeKind;
         return "";     
     }
     
     public String visitLiteralExpr(LiteralExpr expr) throws TypeError, IdentificationError {
         expr.lit.visit(this);  
+        expr.type = expr.lit.type;
         return "";      
+    }
+
+    public String visitNewObjectExpr(NewObjectExpr expr) throws TypeError, IdentificationError {
+        expr.classtype.visit(this);
+        expr.type = TypeKind.CLASS;
+        return "";
     }
 
     public String visitNewArrayExpr(NewArrayExpr expr) throws TypeError, IdentificationError {
         if (isSameType(expr.sizeExpr.type, TypeKind.INT)) {
             expr.eltType.visit(this);
             expr.sizeExpr.visit(this);
+            expr.type = TypeKind.ARRAY;
         }
         else {
-            typeError(0);
+            typeError(expr.posn.start, "visitNewArrayExpr");
         }
         return "";        
     }
     
     public String visitNewStringExpr(NewStringExpr expr) throws TypeError, IdentificationError {
-        expr.sizeExpr.visit(this);  
+        expr.sizeExpr.visit(this);
+        expr.type = TypeKind.UNSUPPORTED;  
         return "";      
     }
     
     public String visitNullExpr(NullExpr expr) throws TypeError, IdentificationError {
+        expr.type = TypeKind.ERROR;
         return "";
     }
 
@@ -471,19 +609,31 @@ public class ASTIdentify implements Traveller<String> {
     ///////////////////////////////////////////////////////////////////////////////
     
     public String visitThisRef(ThisRef ref) throws TypeError, IdentificationError {
-        ListIterator<HashMap<String, Declaration>> tmpIterator = scopeIdentificationTable.listIterator(0);
-        Declaration temp = search(ref.decl.name);
-        if (temp != null && isSameType(temp.type.typeKind, ref.decl.type.typeKind)) {
-
+        //if the thisRef was 'this' or 'this.field'
+        if (ref.decl.getClass().equals(new QualRef(null, null, null))) {
+            Declaration temp = search(ref.decl.name);
+            if (temp != null && isSameType(temp.type.typeKind, ref.decl.type.typeKind)) {
+                ref.decl.type.typeKind = temp.type.typeKind;
+            }
+            else {
+                typeError(ref.posn.start, "visitThisRef");
+            }
         }
         else {
-            typeError(0);
+
         }
+        
         return "";
     }
     
     public String visitIdRef(IdRef ref) throws TypeError, IdentificationError {
-        ref.id.visit(this);
+        ref.id.visit(this);   
+        if (search(ref.id.spelling) != null) {
+            ref.decl = search(ref.id.spelling);
+        }    
+        else {
+            identificationError(ref.posn.start, "visitIdRef", "Variable " + ref.id.spelling + " may not have been initialized");
+        }
         return "";        
     }
         
@@ -492,24 +642,52 @@ public class ASTIdentify implements Traveller<String> {
         MethodDeclList methods = findMethods(qr.ref.decl.name);
         boolean fieldValid = false;
         boolean methodValid = false;
+        FieldDecl tempField = null;
+        MethodDecl tempMethod = null;
+        //check if the reference is a field reference
         for (FieldDecl f: fields) {
             if (f.name == qr.ref.decl.name) {
                 fieldValid = true;
+                tempField = f;
                 break;
             }
         }
+        //check if the reference is a method reference
         for (MethodDecl m: methods) {
             if (m.name == qr.ref.decl.name) {
                 methodValid = true;
+                tempMethod = m;
                 break;
             }
         }
-        if (fieldValid || methodValid) {
+        if (fieldValid) {
             qr.id.visit(this);
             qr.ref.visit(this);
+            //check if reference and identifier types match
+            if (isSameType(qr.ref.decl.type.typeKind, search(qr.ref.decl.name).type.typeKind) &&
+                isSameType(qr.id.decl.type.typeKind, tempField.type.typeKind)) {
+                
+            }
+            else {
+                typeError(qr.posn.start, "visitQRef");
+            }
+            qr.decl.type.typeKind = tempField.type.typeKind;
+        }
+        else if (methodValid) {
+            qr.id.visit(this);
+            qr.ref.visit(this);
+            //check if reference and identifier types match
+            if (isSameType(qr.ref.decl.type.typeKind, search(qr.ref.decl.name).type.typeKind) &&
+                isSameType(qr.id.decl.type.typeKind, tempMethod.type.typeKind)) {
+                
+            }
+            else {
+                typeError(qr.posn.start, "visitQRef");
+            }
+            qr.decl.type.typeKind = tempField.type.typeKind;
         }
         else {
-            
+            identificationError(qr.posn.start, "visitQRef", "term " + qr.id.spelling + " does not exist");
         }
         return "";      
     }
@@ -522,7 +700,7 @@ public class ASTIdentify implements Traveller<String> {
     ///////////////////////////////////////////////////////////////////////////////
     
     public String visitIdentifier(Identifier id) throws TypeError, IdentificationError {
-        
+        id.decl = search(id.spelling);
         return "";
     }
     
@@ -531,14 +709,17 @@ public class ASTIdentify implements Traveller<String> {
     }
     
     public String visitIntLiteral(IntLiteral num) throws TypeError, IdentificationError {
+        num.type = TypeKind.INT;
+        return "";
+    }
+
+    public String visitNullLiteral(NullLiteral nul) throws TypeError, IdentificationError {
+        nul.type = TypeKind.ERROR;
         return "";
     }
     
     public String visitBooleanLiteral(BooleanLiteral bool) throws TypeError, IdentificationError {
-        return "";
-    }
-
-    public String visitNewObjectExpr(NewObjectExpr expr) throws TypeError, IdentificationError {
+        bool.type = TypeKind.BOOLEAN;
         return "";
     }
 }

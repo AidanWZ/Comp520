@@ -192,8 +192,10 @@ public class ASTDisplay implements Visitor<String,Object> {
     
     public Object visitVardeclStmt(VarDeclStmt stmt, String arg){
         show(arg, stmt);
-        stmt.varDecl.visit(this, indent(arg));	
-        stmt.initExp.visit(this, indent(arg));
+        stmt.varDecl.visit(this, indent(arg));
+        if (stmt.initExp != null) {
+            stmt.initExp.visit(this, indent(arg));
+        }        
         return null;
     }
     

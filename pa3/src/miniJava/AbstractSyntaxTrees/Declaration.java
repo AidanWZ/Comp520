@@ -17,4 +17,8 @@ public abstract class Declaration extends AST {
 	
 	public String name;
 	public TypeDenoter type;
+
+	public String toString() {
+		return name;
+	}
 }

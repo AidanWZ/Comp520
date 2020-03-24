@@ -61,4 +61,5 @@ public interface Traveller<ResultType> {
     public ResultType visitOperator(Operator op) throws TypeError, IdentificationError;
     public ResultType visitIntLiteral(IntLiteral num) throws TypeError, IdentificationError;
     public ResultType visitBooleanLiteral(BooleanLiteral bool) throws TypeError, IdentificationError;
+    public ResultType visitNullLiteral(NullLiteral nullLiteral) throws TypeError, IdentificationError;
 }
