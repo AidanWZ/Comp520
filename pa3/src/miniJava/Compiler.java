@@ -82,6 +82,7 @@ public class Compiler {
         getDebugLevel(args);        
 		try {
             display("getting sourcefile...");
+            //source = new SourceFile(args[0]);
             source = new SourceFile(System.getProperty("user.dir") + args[0]);
             //source.getContents();
             display("Initializing scanner...");
@@ -95,12 +96,12 @@ public class Compiler {
             display("Initializing parser...");
             parser   = new Parser(scanner, parseReporter, debug);
             display("Initializing ast display...");
-            display  = new ASTDisplay();
-            display("Initializing ast identify...");
-            identifier = new ASTIdentify(idReporter, typeReporter);
+            display  = new ASTDisplay();            
 
             display("Starting syntactic analysis...");
             ast = parser.parse();
+            display("Initializing ast identify...");
+            identifier = new ASTIdentify(idReporter, typeReporter, ast);
             displayAST();
             display("Starting Identification/Type Checking...");
             idErrors = identifier.visit(ast);

@@ -5,11 +5,13 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Stack;
+import java.util.Map.Entry;
 
 import miniJava.ErrorReporter;
 import miniJava.SyntacticAnalyzer.IdentificationError;
@@ -32,95 +34,109 @@ import miniJava.SyntacticAnalyzer.TypeError;
  */
 public class ASTIdentify implements Traveller<String> {
 
-    public Stack<HashMap<String,Declaration>> scopeIdentificationTable;
-    public ListIterator<HashMap<String, Declaration>> iterator;
+    public Stack<HashMap<String, Declaration>> scopeIdentificationTable;
+    public ArrayList<Stack<HashMap<String, Declaration>>> allMembers;
+    public AST ast;
     public int iteratorIndex;
     public ErrorReporter idReporter;
     public ErrorReporter typeReporter;
-    
+
     public String className;
     public TypeKind returnKind;
     public String referenceName;
+    public boolean methodStatic;
 
-    public ASTIdentify(ErrorReporter idReporter, ErrorReporter typeReporter) {
+    public ASTIdentify(ErrorReporter idReporter, ErrorReporter typeReporter, AST ast) {
         this.scopeIdentificationTable = new Stack<HashMap<String, Declaration>>();
+        this.ast = ast;
+        this.allMembers = new ArrayList<Stack<HashMap<String, Declaration>>>();
         this.idReporter = idReporter;
         this.typeReporter = typeReporter;
-        this.iteratorIndex = 0;
-        
+        this.iteratorIndex = -1;
+
         HashMap<String, Declaration> temp = new HashMap<String, Declaration>();
 
         FieldDeclList tempFieldsList;
         MethodDeclList tempMethodsList;
         ParameterDeclList tempParameterList;
-        
-        //adding System class
+
+        // adding System class
         tempFieldsList = new FieldDeclList();
         tempMethodsList = new MethodDeclList();
         tempParameterList = new ParameterDeclList();
-        tempFieldsList.add(new FieldDecl(
-            false, 
-            true, 
-            new ClassType(
-                new Identifier(
-                    new Token(
-                        0, 
-                        "System", 
-                        new SourcePosition(0,0))), 
-                    new SourcePosition(0, 0)), 
-                "System", 
-            new SourcePosition(0, 0)));
+        tempFieldsList.add(new FieldDecl(false, true,
+                new ClassType(new Identifier(new Token(0, "System", new SourcePosition(0, 0))),
+                        new SourcePosition(0, 0)),
+                "System", new SourcePosition(0, 0)));
         temp.put("System", new ClassDecl("System", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
 
-        //adding _PrintStream class
+        // adding _PrintStream class
         tempFieldsList = new FieldDeclList();
         tempMethodsList = new MethodDeclList();
         tempParameterList = new ParameterDeclList();
-        tempParameterList.add(new ParameterDecl(new BaseType(TypeKind.INT, new SourcePosition(0,0)), "x", new SourcePosition(0,0)));
+        tempParameterList.add(
+                new ParameterDecl(new BaseType(TypeKind.INT, new SourcePosition(0, 0)), "x", new SourcePosition(0, 0)));
         tempMethodsList.add(new MethodDecl(
-            new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0,0)), "println", new SourcePosition(0,0)), 
-            new ParameterDeclList(), 
-            new StatementList(), 
-            new SourcePosition(0,0)));
-        temp.put("_PrintStream", new ClassDecl("_PrintStream", tempFieldsList, tempMethodsList, new SourcePosition(0,0)));
-        
-        //adding String class
+                new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println",
+                        new SourcePosition(0, 0)),
+                new ParameterDeclList(), new StatementList(), new SourcePosition(0, 0)));
+        temp.put("_PrintStream",
+                new ClassDecl("_PrintStream", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
+
+        // adding String class
         tempFieldsList = new FieldDeclList();
         tempMethodsList = new MethodDeclList();
         tempParameterList = new ParameterDeclList();
         temp.put("String", new ClassDecl("String", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
-        
-        //creating top level scope
-        scopeIdentificationTable.add(temp);        
-        iterator = scopeIdentificationTable.listIterator(0);
+
+        // creating top level scope
+        addScope();
+        scopeIdentificationTable.set(0, temp);
+
+        //loading file classes and members
+        loadClassMembers();
+    }
+
+    public void loadClassMembers() {
+        //loads classes and members before
+        //starting main traveral
+        int index = 0;
+        for (ClassDecl c: ((Package) this.ast).classDeclList) {
+            allMembers.add(new Stack<HashMap<String, Declaration>>());
+            allMembers.get(index).push(new HashMap<String, Declaration>());
+            allMembers.get(index).peek().put(c.name, c);
+            allMembers.get(index).push(new HashMap<String, Declaration>());
+            for (FieldDecl f: c.fieldDeclList) { 
+                allMembers.get(index).peek().put(f.name, f);                
+            }
+            for (MethodDecl m: c.methodDeclList) {
+                returnKind = m.type.typeKind;   
+                allMembers.get(index).peek().put(m.name, m); 
+            }            
+            index++;
+        }        
     }
 
     public boolean isSameType(TypeKind type1, TypeKind type2) {
         if (type1.equals(type2)) {
             if (type1.equals(TypeKind.UNSUPPORTED) || type2.equals(TypeKind.UNSUPPORTED)) {
                 return false;
-            }
-            else {
+            } else {
                 return true;
             }
-        }
-        else if (type1.equals(TypeKind.ERROR)) {
+        } else if (type1.equals(TypeKind.ERROR)) {
             if (type2.equals(TypeKind.UNSUPPORTED)) {
                 return false;
-            }
-            else {
+            } else {
                 return true;
             }
-        }
-        else if (type2.equals(TypeKind.ERROR)) {
+        } else if (type2.equals(TypeKind.ERROR)) {
             if (type1.equals(TypeKind.UNSUPPORTED)) {
                 return false;
-            }
-            else {
+            } else {
                 return true;
             }
-        }
-        else {
+        } else {
             return false;
         }
     }
@@ -129,39 +145,58 @@ public class ASTIdentify implements Traveller<String> {
         return expr1.getClass().equals(expr2.getClass());
     }
 
-    public void displayIdTable() {
+    public void displayIdTable() {        
         Iterator<HashMap<String, Declaration>> scopeIterator = scopeIdentificationTable.iterator();
-        System.out.println("==============================================");
-        System.out.println("NAME : TYPE");
-        System.out.println("==============================================");
+        int level = 0;
+        System.out.println("================ScopedIdTable=================");
         boolean first = true;
         while (scopeIterator.hasNext()) {
-            for(Map.Entry<String, Declaration> mapElement : scopeIterator.next().entrySet()) {
+            System.out.println("------------Level: "+ level + "-------------");
+            for (Map.Entry<String, Declaration> mapElement : scopeIterator.next().entrySet()) {
                 if (mapElement.getValue().type == null) {
                     if (first) {
                         System.out.println(mapElement.getKey() + " : " + "class");
-                    }
-                    else {
+                    } else {
                         System.out.println(mapElement.getKey() + " : " + mapElement.getValue());
                     }
-                }
-                else {
+                } else {
                     if (first) {
                         System.out.println(mapElement.getKey() + " : " + "class");
-                    }
-                    else {
+                    } else {
                         System.out.println(mapElement.getKey() + " : " + mapElement.getValue().type.typeKind);
                     }
                 }
             }
             first = false;
-            System.out.println("==============================================");
+            level++;
         }
+        System.out.println("==============================================");
     }
 
-    public Declaration search(String name) {
-        int tempIndex = iteratorIndex;
-        while (tempIndex > 0) {
+    private void displayAllMembers() {
+        //for each stack/class in the list
+        for (Stack<HashMap<String, Declaration>> clas: allMembers) {
+            System.out.println("-----------------Class-------------");
+            Iterator<HashMap<String, Declaration>> scopeIterator = clas.iterator();
+            //for each scope in the stack
+            int counter = 0;
+            while(scopeIterator.hasNext()) {
+                System.out.println("**********Level " + counter);
+                Iterator<Map.Entry<String, Declaration>> memberIterator = scopeIterator.next().entrySet().iterator();
+                //for each element in the scope
+                while (memberIterator.hasNext()) {                    
+                    Declaration current = memberIterator.next().getValue();
+                    System.out.println("Name: " + current.name);
+                }
+                counter++;
+            }            
+        }    
+        System.out.println("----------------------------------------");
+    }
+
+    public Declaration search(String name) {        
+        int tempIndex = iteratorIndex;        
+        while (tempIndex >= 0) {
             if (scopeIdentificationTable.elementAt(tempIndex).containsKey(name)) {
                 return scopeIdentificationTable.get(tempIndex).get(name);
             }
@@ -171,8 +206,8 @@ public class ASTIdentify implements Traveller<String> {
     }
 
     public Declaration searchAbove(String name) {
-        int tempIndex = iteratorIndex-1;
-        while (tempIndex > 0) {
+        int tempIndex = iteratorIndex - 1;
+        while (tempIndex >= 0) {
             if (scopeIdentificationTable.elementAt(tempIndex).containsKey(name)) {
                 return scopeIdentificationTable.get(tempIndex).get(name);
             }
@@ -181,26 +216,81 @@ public class ASTIdentify implements Traveller<String> {
         return null;
     }
 
-    public FieldDeclList findFields(String className) {
-        ClassDecl decl = (ClassDecl) search(className);
+    public Declaration searchAllMembers(String memberName) {
+        // for each class
+        for (Stack<HashMap<String, Declaration>> clas: allMembers) {
+            Iterator<HashMap<String, Declaration>> scopeIterator = clas.iterator();
+            //for each scope in the stack
+            while(scopeIterator.hasNext()) {
+                Iterator<Map.Entry<String, Declaration>> memberIterator = scopeIterator.next().entrySet().iterator();
+                //for each element in the scope
+                while (memberIterator.hasNext()) {                    
+                    Declaration current = memberIterator.next().getValue();
+                    if (current.name.equals(memberName)) {
+                        return current;
+                    }
+                }
+            }
+        }            
+        return null;
+    }
+
+    public FieldDeclList findFields(String classname) {
+        ClassDecl decl = (ClassDecl) search(classname);
         return decl.fieldDeclList;
     }
 
-    public MethodDeclList findMethods(String className) {
-        ClassDecl decl = (ClassDecl) search(className);
+    public MethodDeclList findMethods(String classname) {
+        ClassDecl decl = (ClassDecl) search(classname);
         return decl.methodDeclList;
+    }
+
+    public MemberDecl findSpecifiedMember(String className, String memberName) {
+        FieldDeclList fields = findFields(className);
+        MethodDeclList methods = findMethods(className);
+        for (FieldDecl f: fields) {
+            if (f.name.equals(memberName)) {
+                return f;
+            }
+        }
+        for (MethodDecl m: methods) {
+            if (m.name.equals(memberName)) {
+                return m;
+            }
+        }
+        return null;
+    }
+
+    public FieldDecl findField(String fieldName) {
+        ClassDecl decl = (ClassDecl) search(this.className);
+        for (FieldDecl f: decl.fieldDeclList) {
+            if (f.name.equals(fieldName)) {
+                return f;
+            }
+        }
+        return null;
+    }
+
+    public MethodDecl findMethod(String methodName) {
+        ClassDecl decl = (ClassDecl) search(this.className);
+        for (MethodDecl m: decl.methodDeclList) {
+            if (m.name.equals(methodName)) {
+                return m;
+            }
+        }
+        return null;
     }
 
     public MemberDecl findMember(String memberName) {
         MethodDeclList classMethods = findMethods(this.className);
         FieldDeclList classFields = findFields(this.className);
         for(MethodDecl m: classMethods) {
-            if (m.name == memberName) {
+            if (m.name.equals(memberName)) {
                 return m;
             }
         }
         for(FieldDecl f: classFields) {
-            if (f.name == memberName) {
+            if (f.name.equals(memberName)) {
                 return f;
             }
         }
@@ -241,50 +331,79 @@ public class ASTIdentify implements Traveller<String> {
     }
 
     public String visitPackage(Package prog) throws TypeError, IdentificationError {
-        for (ClassDecl c: prog.classDeclList) {            
+        for (ClassDecl c: prog.classDeclList) {          
             className = c.name;
             scopeIdentificationTable.peek().put(c.name, c);
-            c.visit(this);  
-                      
+            c.visit(this);                        
         }    
         return "";    
     }
 
     public String visitClassDecl(ClassDecl clas) throws TypeError, IdentificationError {
-        addScope();
+        addScope(); //adding level 1
         for (FieldDecl f: clas.fieldDeclList) { 
-            scopeIdentificationTable.peek().put(f.name, f);           
+            scopeIdentificationTable.peek().put(f.name, f);     
             f.visit(this);            
         }
         for (MethodDecl m: clas.methodDeclList) {
             returnKind = m.type.typeKind;  
-            scopeIdentificationTable.peek().put(m.name, m);          
+            methodStatic = m.isStatic;
+            scopeIdentificationTable.peek().put(m.name, m);         
             m.visit(this);
         }
-        removeScope();
+        removeScope(); //back to level 0
         return "";
     }
 
-    public String visitFieldDecl(FieldDecl fd) throws TypeError, IdentificationError {        
-        fd.type.visit(this);            
+    public String visitFieldDecl(FieldDecl fd) throws TypeError, IdentificationError { 
+        //if the field is a class type                   
+        if (fd.type.getClass().equals(new ClassType(null, null).getClass())) {           
+            if (searchAllMembers(((ClassType)fd.type).className.spelling) == null) {
+                identificationError(fd.posn.start, "visitFieldDecl", "Type " + ((ClassType)fd.type).className.spelling + " has not been declared");
+            }
+        }   
+        //if the field is an array of class types
+        else if (fd.type.getClass().equals(new ArrayType(null, null).getClass())) {
+            if (((ArrayType)fd.type).eltType.getClass().equals(new ClassType(null, null).getClass())) {
+                if (searchAllMembers(((ClassType)((ArrayType)fd.type).eltType).className.spelling) == null) {
+                    identificationError(fd.posn.start, "visitFieldDecl", "Type " + ((ClassType)((ArrayType)fd.type).eltType).className.spelling + " has not been declared");
+                }
+            }
+        }  
+        //if the field is a base type
+        else {
+            fd.type.visit(this);
+        }                          
         return "";
     }
 
     public String visitMethodDecl(MethodDecl m) throws TypeError, IdentificationError {
-        addScope();
+        //if the method is a class type check the class exists     
+        if (m.type.getClass().equals(new ClassType(null, null).getClass()))  {
+            if (searchAllMembers(((ClassType)m.type).className.spelling) == null) {
+                identificationError(m.posn.start, "visitMethodDecl", "Type " + ((ClassType)m.type).className.spelling + " has not been declared");
+            }
+        }   
+        //if the method is an array of class types check the class exists
+        else if (m.type.getClass().equals(new ArrayType(null, null).getClass())) {
+            if (((ArrayType)m.type).eltType.getClass().equals(new ClassType(null, null).getClass())) {
+                if (searchAllMembers(((ClassType)((ArrayType)m.type).eltType).className.spelling) == null) {
+                    identificationError(m.posn.start, "visitMethodDecl", "Type " + ((ClassType)((ArrayType)m.type).eltType).className.spelling + " has not been declared");
+                }
+            }
+        }         
         m.type.visit(this);
         ParameterDeclList pdl = m.parameterDeclList;
-        addScope();
         for (ParameterDecl pd: pdl) {            
             pd.visit(this);
             scopeIdentificationTable.peek().put(pd.name, pd);
         }
         StatementList sl = m.statementList;
+        addScope(); //adding level 3
         for (Statement s: sl) {
             s.visit(this);
         } 
-        removeScope();
-        removeScope();
+        removeScope(); //going back to level 1
         return "";     
     }
     
@@ -329,16 +448,16 @@ public class ASTIdentify implements Traveller<String> {
     ///////////////////////////////////////////////////////////////////////////////
 
     public String visitBlockStmt(BlockStmt stmt) throws TypeError, IdentificationError {
-        addScope();
+        addScope(); //adding scope 
         StatementList sl = stmt.sl;
         for (Statement s: sl) {
             s.visit(this);
         }
-        removeScope();
+        removeScope(); //removing scope
         return "";
     }
     
-    public String visitVardeclStmt(VarDeclStmt stmt) throws TypeError, IdentificationError {     
+    public String visitVardeclStmt(VarDeclStmt stmt) throws TypeError, IdentificationError {    
         if (iteratorIndex == 3 && searchAbove(stmt.varDecl.name) != null) {
             identificationError(stmt.posn.start, "visitVardeclStmt", "duplicate local variable " + stmt.varDecl.name);
         }
@@ -367,17 +486,57 @@ public class ASTIdentify implements Traveller<String> {
     public String visitAssignStmt(AssignStmt stmt) throws TypeError, IdentificationError {
         stmt.ref.visit(this);
         stmt.val.visit(this);
-        if (search(((IdRef)stmt.ref).id.spelling) == null) {            
-            identificationError(stmt.posn.start, "visitAssignStmt", "Variable may not have been initialized");                  
-        }           
-        else {
-            if (isSameType(search(((IdRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
-                
-            }
+        //if the reference is a this reference        
+        if (stmt.ref.getClass().equals(new QualRef(null, null, null).getClass())) { 
+            if (((QualRef)stmt.ref).ref.getClass().equals(new ThisRef(new SourcePosition()).getClass())) {                            
+                if (search(((QualRef)stmt.ref).id.spelling) == null) {            
+                    identificationError(stmt.posn.start, "visitAssignStmt", "Variable may not have been initialized");                  
+                }           
+                else {
+                    //if the reference is a class
+                    if (isSameType(search(((QualRef)stmt.ref).id.spelling).type.typeKind, TypeKind.CLASS)) {                
+                        if (isSameType(search(((QualRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
+                            
+                        }
+                        else {
+                            typeError(stmt.posn.start, "visitAssignStmt");
+                        }
+                    }
+                    else {
+                        if (isSameType(search(((QualRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
+                            
+                        }
+                        else {
+                            typeError(stmt.posn.start, "visitAssignStmt");
+                        }
+                    }            
+                }               
+            }                                
+        }
+        else {            
+            if (search(stmt.ref.decl.name) == null) {            
+                identificationError(stmt.posn.start, "visitAssignStmt", "Variable may not have been initialized");                  
+            }           
             else {
-                typeError(stmt.posn.start, "visitAssignStmt");
-            }
-        }        
+                //if the reference is a class
+                if (isSameType(search(stmt.ref.decl.name).type.typeKind, TypeKind.CLASS)) {                
+                    if (isSameType(search(stmt.ref.decl.name).type.typeKind, stmt.val.type)) {
+                        
+                    }
+                    else {
+                        typeError(stmt.posn.start, "visitAssignStmt");
+                    }
+                }
+                else {
+                    if (isSameType(search(stmt.ref.decl.name).type.typeKind, stmt.val.type)) {
+                        
+                    }
+                    else {
+                        typeError(stmt.posn.start, "visitAssignStmt");
+                    }
+                }            
+            }                    
+        }
         return "";
     }
     
@@ -441,10 +600,8 @@ public class ASTIdentify implements Traveller<String> {
                         identificationError(stmt.posn.start, "visitIfStmt", "Cannot have only var declaration in conditional branch");
                     }
                 }
-                else {
-                    addScope();
-                    stmt.thenStmt.visit(this);
-                    removeScope();
+                else {                    
+                    stmt.thenStmt.visit(this);                    
                 }
                 
                 return "";
@@ -467,12 +624,8 @@ public class ASTIdentify implements Traveller<String> {
                     }
                 }
                 else {
-                    addScope();
                     stmt.thenStmt.visit(this);
-                    removeScope();
-                    addScope();
                     stmt.elseStmt.visit(this);
-                    removeScope();
                 }                
                 return "";
             }
@@ -500,12 +653,12 @@ public class ASTIdentify implements Traveller<String> {
     ///////////////////////////////////////////////////////////////////////////////
 
     public String visitUnaryExpr(UnaryExpr expr) throws TypeError, IdentificationError {
-        if (expr.operator.spelling == "!" && isSameType(expr.expr.type, TypeKind.BOOLEAN)) {
+        if (expr.operator.spelling.equals("!") && isSameType(expr.expr.type, TypeKind.BOOLEAN)) {
             expr.operator.visit(this);
             expr.expr.visit(this);
             expr.type = expr.expr.type;
         } 
-        else if (expr.operator.spelling == "-" && isSameType(expr.expr.type, TypeKind.INT)) {
+        else if (expr.operator.spelling.equals("-") && isSameType(expr.expr.type, TypeKind.INT)) {
             expr.operator.visit(this);
             expr.expr.visit(this);
             expr.type = expr.expr.type;
@@ -521,7 +674,7 @@ public class ASTIdentify implements Traveller<String> {
         expr.left.visit(this);
         expr.right.visit(this);
         if (isSameType(expr.left.type, expr.right.type)) {            
-            if (expr.operator.spelling == "==") {
+            if (expr.operator.spelling.equals("==")) {
                 expr.type = TypeKind.BOOLEAN;
             }
             else {
@@ -609,82 +762,255 @@ public class ASTIdentify implements Traveller<String> {
     ///////////////////////////////////////////////////////////////////////////////
     
     public String visitThisRef(ThisRef ref) throws TypeError, IdentificationError {
-        //if the thisRef was 'this' or 'this.field'
-        if (ref.decl.getClass().equals(new QualRef(null, null, null))) {
-            Declaration temp = search(ref.decl.name);
-            if (temp != null && isSameType(temp.type.typeKind, ref.decl.type.typeKind)) {
-                ref.decl.type.typeKind = temp.type.typeKind;
-            }
-            else {
-                typeError(ref.posn.start, "visitThisRef");
-            }
+        //if in a static context this cannot be used
+        if (this.methodStatic) {
+            typeError(ref.posn.start, "visitThisRef");
+        }
+        Declaration temp = search(this.className);
+        if (temp != null) {
+            ref.decl = temp;
         }
         else {
-
+            typeError(ref.posn.start, "visitThisRef");
         }
-        
         return "";
     }
     
     public String visitIdRef(IdRef ref) throws TypeError, IdentificationError {
-        ref.id.visit(this);   
-        if (search(ref.id.spelling) != null) {
-            ref.decl = search(ref.id.spelling);
-        }    
+        ref.id.visit(this);         
+        // check for static membership
+        if (findMember(ref.id.spelling) != null) {
+            if (!((MemberDecl) findMember(ref.id.spelling)).isStatic && methodStatic) {
+                identificationError(ref.posn.start, "visitIdRef", "Non static reference to static member");
+            }
+        } 
         else {
-            identificationError(ref.posn.start, "visitIdRef", "Variable " + ref.id.spelling + " may not have been initialized");
-        }
+            if (searchAllMembers(ref.id.spelling) != null) {
+                ref.decl = search(ref.id.spelling);
+            }    
+            else {
+                identificationError(ref.posn.start, "visitIdRef", "Variable " + ref.id.spelling + " may not have been initialized");
+            }
+        }        
         return "";        
     }
         
-    public String visitQRef(QualRef qr) throws TypeError, IdentificationError {
-        FieldDeclList fields = findFields(qr.ref.decl.name);
-        MethodDeclList methods = findMethods(qr.ref.decl.name);
+    public String visitQRef(QualRef qr) throws TypeError, IdentificationError { 
+        qr.id.visit(this);
+        qr.ref.visit(this);
+        FieldDeclList fields = new FieldDeclList();;
+        MethodDeclList methods = new MethodDeclList();
+        //if the qref is a this reference
+        if (qr.ref.getClass().equals(new ThisRef(new SourcePosition()).getClass())) {
+            fields = findFields(className);
+            methods = findMethods(className);
+        } 
+        //if the reference is an instance of the current class
+        else if (className.equals(((ClassType)search(qr.id.spelling).type).className.spelling)) {
+            if (!((FieldDecl)search(qr.id.spelling)).isStatic && methodStatic) {
+                typeError(qr.posn.start, "visitQRef");
+            }
+            else {
+                fields.add(findField(((FieldDecl)search(qr.id.spelling)).name));
+                //methods.add(findMethod(((FieldDecl)search(qr.id.spelling)).name));
+            }
+        } 
+        //member of different class
+        else {
+            if (qr.ref.decl == null) {
+                fields.add((FieldDecl)searchAllMembers(((IdRef)qr.ref).id.spelling));
+            }
+            else {
+                fields = findFields(qr.ref.decl.name);
+                methods = findMethods(qr.ref.decl.name);
+            }            
+        }     
+        
         boolean fieldValid = false;
         boolean methodValid = false;
         FieldDecl tempField = null;
         MethodDecl tempMethod = null;
-        //check if the reference is a field reference
-        for (FieldDecl f: fields) {
-            if (f.name == qr.ref.decl.name) {
-                fieldValid = true;
-                tempField = f;
-                break;
+        // if the reference is a this ref
+        if (qr.ref.getClass().equals(new ThisRef(new SourcePosition()).getClass())) {
+            //check if the reference is a field reference
+            for (FieldDecl f: fields) {  
+                //within a static method in a class a reference cannot directly access a non-static member
+                if ((methodStatic && !f.isStatic)) {
+                    typeError(qr.posn.start, "visitQRef");
+                }
+                if (f.name.equals(qr.id.spelling)) {
+                    fieldValid = true;
+                    tempField = f;
+                    break;
+                }
+            }
+            //check if the reference is a method reference
+            for (MethodDecl m: methods) {
+                //within a static method in a class a reference cannot directly access a non-static member
+                if ((methodStatic && !m.isStatic)) {
+                    typeError(qr.posn.start, "visitQRef");
+                }
+                if (m.name.equals(qr.id.spelling)) {
+                    methodValid = true;
+                    tempMethod = m;
+                    break;
+                }
             }
         }
-        //check if the reference is a method reference
-        for (MethodDecl m: methods) {
-            if (m.name == qr.ref.decl.name) {
-                methodValid = true;
-                tempMethod = m;
-                break;
+        //if reference is an instance of the current class
+        else if (className.equals(((ClassType)search(qr.id.spelling).type).className.spelling)) {
+            //check if the reference is a field reference
+            for (FieldDecl f: fields) {
+                //within a static method in a class a reference cannot directly access a non-static member
+                if (methodStatic && !f.isStatic) {
+                    typeError(qr.posn.start, "visitQRef");
+                }
+                //check for private conflict
+                if (((FieldDecl) search(((IdRef) qr.ref).id.spelling)).isPrivate) {
+                    identificationError(qr.posn.start, "visitQRef", "The field " + qr.id.spelling + "." + ((IdRef) qr.ref).id.spelling + " is not visible");
+                } 
+                if (f.name.equals(qr.ref.decl.name)) {
+                    fieldValid = true;
+                    tempField = f;
+                    break;
+                }
+            }
+            //check if the reference is a method reference            
+            for (MethodDecl m: methods) {                
+                //within a static method in a class a reference cannot directly access a non-static member
+                if ((methodStatic && !m.isStatic)) {
+                    typeError(qr.posn.start, "visitQRef");
+                }
+                // if decl is null then search current class members
+                if (findSpecifiedMember(((ClassType)search(qr.id.spelling).type).className.spelling, ((IdRef) qr.ref).id.spelling) != null) {
+                    methodValid = true;
+                    tempMethod = (MethodDecl) findSpecifiedMember(((ClassType)search(qr.id.spelling).type).className.spelling, ((IdRef) qr.ref).id.spelling);
+                    break;
+                }
+                if (m.name.equals(qr.ref.decl.name)) {
+                    methodValid = true;
+                    tempMethod = m;
+                    break;
+                }
             }
         }
+        // if reference is member of another class
+        else {
+            //check if the reference is a field reference
+            for (FieldDecl f: fields) {
+                //within a static method in a class a reference cannot directly access a non-static member
+                if (methodStatic && !f.isStatic) {
+                    typeError(qr.posn.start, "visitQRef");
+                }
+                //check for private conflict
+                if (((FieldDecl) searchAllMembers(((IdRef) qr.ref).id.spelling)).isPrivate) {
+                    identificationError(qr.posn.start, "visitQRef", "The field " + qr.id.spelling + "." + ((IdRef) qr.ref).id.spelling + " is not visible");
+                } 
+                if (f.name.equals(((IdRef) qr.ref).id.spelling)) {
+                    fieldValid = true;
+                    tempField = f;
+                    break;
+                }
+            }
+            //check if the reference is a method reference            
+            for (MethodDecl m: methods) {                
+                //within a static method in a class a reference cannot directly access a non-static member
+                if ((methodStatic && !m.isStatic)) {
+                    typeError(qr.posn.start, "visitQRef");
+                }
+                // if decl is null then search current class members
+                if (findSpecifiedMember(((ClassType)search(qr.id.spelling).type).className.spelling, ((IdRef) qr.ref).id.spelling) != null) {
+                    methodValid = true;
+                    tempMethod = (MethodDecl) findSpecifiedMember(((ClassType)search(qr.id.spelling).type).className.spelling, ((IdRef) qr.ref).id.spelling);
+                    break;
+                }
+                if (m.name.equals(qr.ref.decl.name)) {
+                    methodValid = true;
+                    tempMethod = m;
+                    break;
+                }
+            }
+        }
+        
         if (fieldValid) {
-            qr.id.visit(this);
-            qr.ref.visit(this);
-            //check if reference and identifier types match
-            if (isSameType(qr.ref.decl.type.typeKind, search(qr.ref.decl.name).type.typeKind) &&
-                isSameType(qr.id.decl.type.typeKind, tempField.type.typeKind)) {
-                
+            //if the field is a this reference
+            if (qr.ref.getClass().equals(new ThisRef(new SourcePosition()).getClass())) {
+                //check for static membership
+                if (isSameType(findField(qr.id.spelling).type.typeKind, TypeKind.CLASS)) {
+                    if (findField(qr.id.spelling).isStatic) {
+
+                    }
+                    else {
+                        identificationError(qr.posn.start, "visitQRef", "Non static reference to static member");
+                    }
+                }
+                qr.decl = findField(qr.id.spelling);
             }
+            //if the reference is an instance of the current class
+            else if (className.equals(((ClassType)search(qr.id.spelling).type).className.spelling)) {
+                if (((MemberDecl)findMember(((IdRef)qr.ref).id.spelling)).isStatic) {
+
+                }
+                else {
+                    identificationError(qr.posn.start, "visitQRef", "Non static reference to static member");
+                }                
+            }     
+            //if reference is member of another class       
             else {
-                typeError(qr.posn.start, "visitQRef");
-            }
-            qr.decl.type.typeKind = tempField.type.typeKind;
+                //check for static membership
+                if (isSameType(searchAllMembers(((IdRef) qr.ref).id.spelling).type.typeKind, TypeKind.CLASS)) {
+                    if (((MemberDecl)qr.ref.decl).isStatic) {
+
+                    }
+                    else {
+                        identificationError(qr.posn.start, "visitQRef", "Non static reference to static member");
+                    }
+                }
+                qr.decl = tempField;
+            }            
         }
         else if (methodValid) {
-            qr.id.visit(this);
-            qr.ref.visit(this);
-            //check if reference and identifier types match
-            if (isSameType(qr.ref.decl.type.typeKind, search(qr.ref.decl.name).type.typeKind) &&
-                isSameType(qr.id.decl.type.typeKind, tempMethod.type.typeKind)) {
-                
+            // if the reference is a this reference
+            if (qr.ref.getClass().equals(new ThisRef(new SourcePosition()).getClass())) {
+                //check for static membership
+                if (isSameType(findField(qr.id.spelling).type.typeKind, TypeKind.CLASS)) {
+                    if (findField(qr.id.spelling).isStatic) {
+
+                    }
+                    else {
+                        identificationError(qr.posn.start, "visitQRef", "Non static reference to static member");
+                    }
+                }
             }
+            //if the reference is an instance of the current class
+            else if (className.equals(((ClassType)search(qr.id.spelling).type).className.spelling)) {
+                if (((MemberDecl)findMember(((IdRef)qr.ref).id.spelling)).isStatic) {
+
+                }
+                else {
+                    identificationError(qr.posn.start, "visitQRef", "Non static reference to static member");
+                }                
+            }     
             else {
-                typeError(qr.posn.start, "visitQRef");
-            }
-            qr.decl.type.typeKind = tempField.type.typeKind;
+                //check for static membership
+                if (isSameType(qr.id.type, TypeKind.CLASS)) {
+                    if (((MemberDecl)qr.ref.decl).isStatic) {
+
+                    }
+                    else {
+                        identificationError(qr.posn.start, "visitQRef", "Non static reference to static member");
+                    }
+                }
+                //check if reference and identifier types match
+                if (isSameType(qr.ref.decl.type.typeKind, search(qr.ref.decl.name).type.typeKind) &&
+                    isSameType(qr.id.decl.type.typeKind, tempMethod.type.typeKind)) {
+                    
+                }
+                else {
+                    typeError(qr.posn.start, "visitQRef");
+                }
+                qr.decl.type.typeKind = tempField.type.typeKind;
+            }            
         }
         else {
             identificationError(qr.posn.start, "visitQRef", "term " + qr.id.spelling + " does not exist");

@@ -1,17 +1,12 @@
-class Tester {
-    private int bar;
-    private Tester temp;
-    private void adder() {
-        temp = null;
-        this.bar = 2;
-        bar = bar + 1;
+class Baz {
+    private static int x;
+    public static Foo y;
+    public void temp(int z) {
+        int a = 0;
+        this.x = 2;
     }
+}
 
-    public boolean changer(int bar) {
-        boolean var = true;
-        if (var == true) {
-            adder();
-        }
-        return true;
-    }
+class Foo {
+    private static int poo;
 }

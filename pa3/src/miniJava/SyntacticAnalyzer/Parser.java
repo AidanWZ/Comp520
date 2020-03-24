@@ -311,7 +311,7 @@ public class Parser {
 					accept(Token.RBRACKET, "parseType");	
 					return new ArrayType(new ClassType(new Identifier(current), current.position), current.position);					}
 				else {
-					return new ClassType(new Identifier(currentToken), current.position);					
+					return new ClassType(new Identifier(current), current.position);					
 				}	
 			case Token.BOOLEAN: 
 				current = currentToken;
@@ -605,7 +605,7 @@ public class Parser {
 					acceptIt();
 					Expression equalsExpr = parseExpression();
 					accept(Token.SEMICOLON, "parseStatement");
-					return new AssignStmt(new ThisRef(current.position), equalsExpr, current.position);
+					return new AssignStmt(ref, equalsExpr, current.position);
 				}						
 			case Token.BOOLEAN:
 				current = currentToken; 
