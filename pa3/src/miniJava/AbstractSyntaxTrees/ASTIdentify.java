@@ -65,9 +65,9 @@ public class ASTIdentify implements Traveller<String> {
         tempMethodsList = new MethodDeclList();
         tempParameterList = new ParameterDeclList();
         tempFieldsList.add(new FieldDecl(false, true,
-                new ClassType(new Identifier(new Token(0, "System", new SourcePosition(0, 0))),
+                new ClassType(new Identifier(new Token(0, "out", new SourcePosition(0, 0))),
                         new SourcePosition(0, 0)),
-                "System", new SourcePosition(0, 0)));
+                "_PrintStream", new SourcePosition(0, 0)));
         temp.put("System", new ClassDecl("System", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
 
         // adding _PrintStream class
@@ -75,7 +75,7 @@ public class ASTIdentify implements Traveller<String> {
         tempMethodsList = new MethodDeclList();
         tempParameterList = new ParameterDeclList();
         tempParameterList.add(
-                new ParameterDecl(new BaseType(TypeKind.INT, new SourcePosition(0, 0)), "x", new SourcePosition(0, 0)));
+                new ParameterDecl(new BaseType(TypeKind.INT, new SourcePosition(0, 0)), "n", new SourcePosition(0, 0)));
         tempMethodsList.add(new MethodDecl(
                 new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println",
                         new SourcePosition(0, 0)),
@@ -91,8 +91,7 @@ public class ASTIdentify implements Traveller<String> {
 
         // creating top level scope
         addScope();
-        scopeIdentificationTable.set(0, temp);
-
+        scopeIdentificationTable.set(0, temp);        
         //loading file classes and members
         loadClassMembers();
     }
@@ -114,7 +113,71 @@ public class ASTIdentify implements Traveller<String> {
                 allMembers.get(index).peek().put(m.name, m); 
             }            
             index++;
-        }        
+        } 
+
+        HashMap<String, Declaration> classItems;
+        HashMap<String, Declaration> memberItems;
+        FieldDeclList tempFieldsList;
+        MethodDeclList tempMethodsList;
+        ParameterDeclList tempParameterList;
+
+        //addng System class 
+        classItems = new HashMap<String, Declaration>();
+        memberItems = new HashMap<String, Declaration>();  
+        tempFieldsList = new FieldDeclList();
+        tempMethodsList = new MethodDeclList();
+        tempParameterList = new ParameterDeclList();
+        tempFieldsList.add(new FieldDecl(false, true,
+                new ClassType(new Identifier(new Token(0, "out", new SourcePosition(0, 0))),
+                        new SourcePosition(0, 0)),
+                "_PrintStream", new SourcePosition(0, 0)));
+        classItems.put("System", new ClassDecl("System", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
+        memberItems.put("out", new FieldDecl(false, true,
+                new ClassType(new Identifier(new Token(0, "out", new SourcePosition(0, 0))),
+                        new SourcePosition(0, 0)),
+                "_PrintStream", new SourcePosition(0, 0)));
+        allMembers.add(new Stack<HashMap<String, Declaration>>());
+        allMembers.get(index).push(new HashMap<String, Declaration>());
+        allMembers.get(index).set(0, classItems);
+        allMembers.get(index).push(new HashMap<String, Declaration>());  
+        allMembers.get(index).set(1, memberItems);
+        index++;
+
+        //adding _PrintStream class
+        classItems = new HashMap<String, Declaration>();
+        memberItems = new HashMap<String, Declaration>(); 
+        tempFieldsList = new FieldDeclList();
+        tempMethodsList = new MethodDeclList();
+        tempParameterList = new ParameterDeclList();
+        tempParameterList.add(
+                new ParameterDecl(new BaseType(TypeKind.INT, new SourcePosition(0, 0)), "n", new SourcePosition(0, 0)));
+        tempMethodsList.add(new MethodDecl(
+                new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println",
+                        new SourcePosition(0, 0)),
+                new ParameterDeclList(), new StatementList(), new SourcePosition(0, 0)));
+        classItems.put("_PrintStream",
+                new ClassDecl("_PrintStream", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
+        memberItems.put("println", new MethodDecl(
+                new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println",
+                        new SourcePosition(0, 0)),
+                new ParameterDeclList(), new StatementList(), new SourcePosition(0, 0)));
+        allMembers.add(new Stack<HashMap<String, Declaration>>());
+        allMembers.get(index).push(new HashMap<String, Declaration>());
+        allMembers.get(index).set(0, classItems);
+        allMembers.get(index).push(new HashMap<String, Declaration>());  
+        allMembers.get(index).set(1, memberItems);
+        index++;
+
+        //adding String class
+        classItems = new HashMap<String, Declaration>();
+        memberItems = new HashMap<String, Declaration>(); 
+        tempFieldsList = new FieldDeclList();
+        tempMethodsList = new MethodDeclList();
+        tempParameterList = new ParameterDeclList();
+        classItems.put("String", new ClassDecl("String", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
+        allMembers.add(new Stack<HashMap<String, Declaration>>());
+        allMembers.get(index).push(new HashMap<String, Declaration>());
+        allMembers.get(index).set(0, classItems);
     }
 
     public boolean isSameType(TypeKind type1, TypeKind type2) {
@@ -174,7 +237,7 @@ public class ASTIdentify implements Traveller<String> {
     }
 
     private void displayAllMembers() {
-        //for each stack/class in the list
+        //for each stack/class in the file list
         for (Stack<HashMap<String, Declaration>> clas: allMembers) {
             System.out.println("-----------------Class-------------");
             Iterator<HashMap<String, Declaration>> scopeIterator = clas.iterator();
@@ -486,7 +549,7 @@ public class ASTIdentify implements Traveller<String> {
     public String visitAssignStmt(AssignStmt stmt) throws TypeError, IdentificationError {
         stmt.ref.visit(this);
         stmt.val.visit(this);
-        //if the reference is a this reference        
+        //if the reference is a this reference        new QualRef
         if (stmt.ref.getClass().equals(new QualRef(null, null, null).getClass())) { 
             if (((QualRef)stmt.ref).ref.getClass().equals(new ThisRef(new SourcePosition()).getClass())) {                            
                 if (search(((QualRef)stmt.ref).id.spelling) == null) {            
@@ -556,17 +619,36 @@ public class ASTIdentify implements Traveller<String> {
     }
         
     public String visitCallStmt(CallStmt stmt) throws TypeError, IdentificationError {
-        stmt.methodRef.visit(this);
-        ExprList al = stmt.argList;
-        int counter = 0;
-        for (Expression e: al) {
-            if (isSameType(e.type, ((MethodDecl) stmt.methodRef.decl).parameterDeclList.get(counter).type.typeKind)) {
-                e.visit(this);
+        if (stmt.methodRef.getClass().equals(new QualRef(null, null, null).getClass())) {
+            Reference temp = ((QualRef)stmt.methodRef).ref;
+            while (temp.getClass().equals(new QualRef(null, null, null).getClass())) {
+                temp = ((QualRef)temp).ref;
             }
-            else {
-                typeError(stmt.posn.start, "visitCallStmt");
+            ((IdRef)temp).visit(this);
+            ExprList al = stmt.argList;
+            int counter = 0;
+            for (Expression e: al) {
+                if (isSameType(e.type, ((MethodDecl) stmt.methodRef.decl).parameterDeclList.get(counter).type.typeKind)) {
+                    e.visit(this);
+                }
+                else {
+                    typeError(stmt.posn.start, "visitCallStmt");
+                }
             }
         }
+        else {
+            stmt.methodRef.visit(this);
+            ExprList al = stmt.argList;
+            int counter = 0;
+            for (Expression e: al) {
+                if (isSameType(e.type, ((MethodDecl) stmt.methodRef.decl).parameterDeclList.get(counter).type.typeKind)) {
+                    e.visit(this);
+                }
+                else {
+                    typeError(stmt.posn.start, "visitCallStmt");
+                }
+            }
+        }        
         return "";
     }
     

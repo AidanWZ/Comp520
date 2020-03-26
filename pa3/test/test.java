@@ -1,8 +1,8 @@
 class Baz {
     private static int x;
-    public static Foo y;
+    public static System y;
     public void temp(int z) {
-        int a = 0;
+        y.out.println();
         this.x = 2;
     }
 }
