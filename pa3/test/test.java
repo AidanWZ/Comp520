@@ -1,12 +1,12 @@
 class Baz {
-    private static int x;
+    public static Foo x;
     public static System y;
     public void temp(int z) {
-        y.out.println();
-        this.x = 2;
+        y.out.println(42);
+        x.poo = null;
     }
 }
 
 class Foo {
-    private static int poo;
+    private static Foo poo;
 }
