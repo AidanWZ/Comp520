@@ -6,6 +6,8 @@
 package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.SourcePosition;
+import miniJava.SyntacticAnalyzer.TypeError;
+import miniJava.SyntacticAnalyzer.IdentificationError;
 
 public class MethodDecl extends MemberDecl {
 	
@@ -18,6 +20,10 @@ public class MethodDecl extends MemberDecl {
 	public <A, R> R visit(Visitor<A, R> v, A o) {
         return v.visitMethodDecl(this, o);
     }
+
+    public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
+        v.visitMethodDecl(this);
+      }
 	
 	public ParameterDeclList parameterDeclList;
 	public StatementList statementList;

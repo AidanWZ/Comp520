@@ -9,6 +9,8 @@ public final class Scanner {
 	private char currentChar;
 	private StringBuffer currentSpelling;
 	private boolean currentlyScanningToken;
+	private int lineNumber;
+	private int charNumber;
 
 	private boolean isLetter(char c) {
 		return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
@@ -20,13 +22,20 @@ public final class Scanner {
 	public Scanner(SourceFile source) {
 		sourceFile = source;
 		currentChar = sourceFile.getSource();
+		lineNumber = 0;
+		charNumber = 0;
 	}
 
 	private void takeIt() {
 	    if (currentlyScanningToken) {
-	      currentSpelling.append(currentChar);
+			currentSpelling.append(currentChar);
+			if (currentChar == '\n') {
+				lineNumber++;
+				charNumber = 0;
+			}
 	    }
-	    currentChar = sourceFile.getSource();
+		currentChar = sourceFile.getSource();
+		charNumber++;
 	  }
 
 	private int scanSeparator() {
@@ -102,12 +111,13 @@ public final class Scanner {
 			kind = scanToken();
 		}
 		pos.finish = sourceFile.getCurrentLine();
+		//tok = new Token(kind, currentSpelling.toString(), lineNumber, charNumber);	
 		tok = new Token(kind, currentSpelling.toString(), pos);		
 		return tok;
 	}
 
 	private int scanToken() {
-		if(isLetter(currentChar)){
+		if(isLetter(currentChar) || currentChar == '_'){
 			takeIt();
 			while (isLetter(currentChar) || isDigit(currentChar) || currentChar == '_') {
 				takeIt();

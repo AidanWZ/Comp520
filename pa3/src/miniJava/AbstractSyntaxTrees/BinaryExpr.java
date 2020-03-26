@@ -5,7 +5,9 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.SyntacticAnalyzer.IdentificationError;
 import miniJava.SyntacticAnalyzer.SourcePosition;
+import miniJava.SyntacticAnalyzer.TypeError;
 
 public class BinaryExpr extends Expression
 {
@@ -18,6 +20,10 @@ public class BinaryExpr extends Expression
         
     public <A,R> R visit(Visitor<A,R> v, A o) {
         return v.visitBinaryExpr(this, o);
+    }
+
+    public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
+        v.visitBinaryExpr(this);
     }
     
     public Operator operator;

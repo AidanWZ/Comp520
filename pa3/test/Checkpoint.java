@@ -39,7 +39,8 @@ public class Checkpoint {
 			// no bin directory in project, assume projDir is root for class files
 			classPath = new File(projDir);
 		}
-		
+		System.out.println(projDir);
+		System.out.println(classPath);
 		// miniJava compiler mainclass present ?
 		if (! new File(classPath + "/miniJava/Compiler.class").exists()) {
 			System.out.println("No miniJava Compiler.class found in " + classPath + "/miniJava/Compiler.class - exiting");

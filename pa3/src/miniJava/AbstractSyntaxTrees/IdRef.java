@@ -6,6 +6,8 @@
 package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.SourcePosition;
+import miniJava.SyntacticAnalyzer.TypeError;
+import miniJava.SyntacticAnalyzer.IdentificationError;
 
 public class IdRef extends BaseRef {
 	
@@ -17,6 +19,10 @@ public class IdRef extends BaseRef {
 	public <A,R> R visit(Visitor<A,R> v, A o) {
 		return v.visitIdRef(this, o);
 	}
+
+	public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
+        v.visitIdRef(this);
+    }
 
 	public Identifier id;
 }

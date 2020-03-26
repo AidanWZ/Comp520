@@ -6,6 +6,8 @@
 package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.SourcePosition;
+import miniJava.SyntacticAnalyzer.TypeError;
+import miniJava.SyntacticAnalyzer.IdentificationError;
 
 public class CallStmt extends Statement
 {
@@ -17,6 +19,10 @@ public class CallStmt extends Statement
     
     public <A,R> R visit(Visitor<A,R> v, A o) {
         return v.visitCallStmt(this, o);
+    }
+
+    public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
+        v.visitCallStmt(this);
     }
     
     public Reference methodRef;

@@ -2,10 +2,10 @@ package miniJava.SyntacticAnalyzer;
 
 public class SyntaxError extends Exception {
 	private static final long serialVersionUID = 2583239898992018218L;
-	SyntaxError() {
+	public SyntaxError() {
 		super();
 	};
-	SyntaxError (String s) {
+	public SyntaxError (String s) {
 		super(s);
 	}
 

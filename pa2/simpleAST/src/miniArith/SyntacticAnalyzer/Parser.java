@@ -20,8 +20,8 @@ package miniArith.SyntacticAnalyzer;
  *
  */
 
-import miniArith.SyntacticAnalyzer.Scanner;
-import miniArith.SyntacticAnalyzer.Token;
+//import miniArith.SyntacticAnalyzer.Scanner;
+//import miniArith.SyntacticAnalyzer.Token;
 import miniArith.ErrorReporter;
 import miniArith.AbstractSyntaxTrees.*;
 

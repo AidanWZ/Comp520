@@ -5,7 +5,9 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.SyntacticAnalyzer.IdentificationError;
 import miniJava.SyntacticAnalyzer.SourcePosition;
+import miniJava.SyntacticAnalyzer.TypeError;
 
 public class ParameterDecl extends LocalDecl {
 	
@@ -15,6 +17,10 @@ public class ParameterDecl extends LocalDecl {
 	
 	public <A, R> R visit(Visitor<A, R> v, A o) {
         return v.visitParameterDecl(this, o);
-    }
+	}
+	
+	public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
+		v.visitParameterDecl(this);
+	  }
 }
 

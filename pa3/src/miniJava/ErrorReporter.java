@@ -11,8 +11,15 @@ public class ErrorReporter {
 	}
 
 	public void reportError(String message, String tokenName, SourcePosition pos) {
-		//System.out.println("ERROR: " + message);
 		this.numErrors++;
+	}
+
+	public void reportIdError(int lineNumber, String error) {
+		System.out.println("*** line " + lineNumber + " Identification Error - " + error);
+	}
+
+	public void reportTypeError(int lineNumber) {
+		System.out.println("*** line " + lineNumber + " Type Error - incompatible types assignment");
 	}
 
 	public void reportRestriction(String message) {

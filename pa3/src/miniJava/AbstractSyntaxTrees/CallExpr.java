@@ -6,6 +6,8 @@
 package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.SourcePosition;
+import miniJava.SyntacticAnalyzer.TypeError;
+import miniJava.SyntacticAnalyzer.IdentificationError;
 
 public class CallExpr extends Expression
 {
@@ -17,6 +19,10 @@ public class CallExpr extends Expression
         
     public <A,R> R visit(Visitor<A,R> v, A o) {
         return v.visitCallExpr(this, o);
+    }
+
+    public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
+        v.visitCallExpr(this);
     }
     
     public Reference functionRef;

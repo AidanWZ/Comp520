@@ -9,6 +9,7 @@ public enum TypeKind {
         VOID,
 		INT,
         BOOLEAN,
+        STRING,
         CLASS,
         ARRAY,
         UNSUPPORTED,

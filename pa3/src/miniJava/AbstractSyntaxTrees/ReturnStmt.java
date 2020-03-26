@@ -5,7 +5,9 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.SyntacticAnalyzer.IdentificationError;
 import miniJava.SyntacticAnalyzer.SourcePosition;
+import miniJava.SyntacticAnalyzer.TypeError;
 
 public class ReturnStmt extends Statement 
 {
@@ -17,6 +19,10 @@ public class ReturnStmt extends Statement
 	public <A,R> R visit(Visitor<A,R> v, A o) {
 		return v.visitReturnStmt(this, o);
 	}
+
+	public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
+		v.visitReturnStmt(this);
+	  }
 
 	public Expression returnExpr;
 }	

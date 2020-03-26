@@ -38,6 +38,7 @@ import miniJava.AbstractSyntaxTrees.MethodDecl;
 import miniJava.AbstractSyntaxTrees.MethodDeclList;
 import miniJava.AbstractSyntaxTrees.NewArrayExpr;
 import miniJava.AbstractSyntaxTrees.NewObjectExpr;
+import miniJava.AbstractSyntaxTrees.NullExpr;
 import miniJava.AbstractSyntaxTrees.Operator;
 import miniJava.AbstractSyntaxTrees.Package;
 import miniJava.AbstractSyntaxTrees.ParameterDecl;
@@ -76,16 +77,16 @@ public class Parser {
 	void accept(int tokenExpected, String methodOrigin) throws SyntaxError {
 	    if (currentToken.kind == tokenExpected) {
 		  previousTokenPosition = this.currentToken.position;
-		  if(debug==true) System.out.println(currentToken.spelling);
+		  display(currentToken.spelling);
 	      currentToken = Scanner.scan();
 	    } 
 	    else {
 	      syntacticError(String.format("Unexpected token. Expected %s but got %s in %s", Token.spell(tokenExpected), currentToken.spelling, methodOrigin), currentToken.spelling);
 	    }
-	  }
+	}
 	void acceptIt() {
 		previousTokenPosition = currentToken.position;
-		if(debug==true) System.out.println(currentToken.spelling);
+		display(currentToken.spelling);
 		currentToken = Scanner.scan();
 	}
 	void start(SourcePosition position) {
@@ -105,14 +106,19 @@ public class Parser {
 	void debug(int kind) {
 		System.out.println(Token.spell(kind));
 	}
+	void display(String text) {
+		if (debug) {
+			System.out.println(text);
+		}
+	}
 
 	public AST parse() throws SyntaxError{
-		if(debug==true) System.out.println("Running parse");
+		display("Running parse");
 		return new Package(parseProgram(), currentToken.position);
 	}
 
 	public ClassDeclList parseProgram() throws SyntaxError{
-		if(debug==true) System.out.println("Running parseProgram");
+		display("Running parseProgram");
 		previousTokenPosition.start = 0;
 		previousTokenPosition.finish = 0;
 		currentToken = Scanner.scan();
@@ -134,7 +140,7 @@ public class Parser {
 
 	//ClassDeclaration ::= class id { ( FieldDeclaration | MethodDeclaration )* }
 	public ClassDecl parseClassDeclaration() throws SyntaxError{
-		if(debug==true) System.out.println("Running parseClassDeclaration");
+		display("Running parseClassDeclaration");
 		FieldDeclList fieldList = new FieldDeclList();
 		MethodDeclList methodList = new MethodDeclList();
 		Token classStart = currentToken;		
@@ -153,7 +159,6 @@ public class Parser {
 						syntacticError("Unexpected Token in parseClassDecleration", current.spelling);
 					}
 					else {
-						current = currentToken;
 						acceptIt();
 						fieldList.add(new FieldDecl(decls.isPrivate, decls.isStatic, decls.type, name.spelling, current.position));
 						break;
@@ -183,13 +188,10 @@ public class Parser {
 						statementList.add(parseStatement());											
 					}															
 					accept(Token.RCURLY, "parseClassDeclaration");
-					MethodDecl temp = new MethodDecl(new FieldDecl(decls.isPrivate, decls.isStatic, decls.type, name.spelling, current.position), parameterList, statementList, current.position);	
-					//System.out.println("============= " +temp.statementList.get(3));
-					methodList.add(temp);				
+					methodList.add(new MethodDecl(new FieldDecl(decls.isPrivate, decls.isStatic, decls.type, name.spelling, current.position), parameterList, statementList, current.position));				
 					break;
 				default: 
-					current = currentToken;
-					syntacticError("Unexpected Token in parseClassDecleration", current.spelling);
+					syntacticError("Unexpected Token in parseClassDecleration", currentToken.spelling);
 					break;
 			}			
 		}		
@@ -198,7 +200,7 @@ public class Parser {
 	}
 	
 	public Identifier parseIdentifier() throws SyntaxError {
-		if(debug==true) System.out.println("Running parseIdentifier");
+		display("Running parseIdentifier");
 		Token temp;
 		if (currentToken.kind == Token.IDENTIFIER) {
 			temp = new Token(Token.IDENTIFIER, currentToken.spelling, currentToken.position);
@@ -218,6 +220,12 @@ public class Parser {
 			previousTokenPosition = currentToken.position;
 			return new Identifier(temp);
 		}
+		else if (currentToken.kind == Token.STRING) {
+			temp = new Token(Token.IDENTIFIER, currentToken.spelling, currentToken.position);
+			accept(Token.INT, "parseIdentifier");
+			previousTokenPosition = currentToken.position;
+			return new Identifier(temp);
+		}
 		else {
 			syntacticError("Unexpected Token in parseIdentifier", currentToken.spelling); 
 		}
@@ -226,7 +234,7 @@ public class Parser {
 	}
 
 	public Identifier parseClassIdentifier() throws SyntaxError {
-		if(debug==true) System.out.println("Running parseIdentifier");
+		display("Running parseIdentifier");
 		Token temp;
 		if (currentToken.kind == Token.IDENTIFIER) {
 			temp = new Token(Token.IDENTIFIER, currentToken.spelling, currentToken.position);
@@ -244,7 +252,7 @@ public class Parser {
 	//Access ::= static ?
 	//Only accepts public, static or private, anything else is rejected
 	public Declarators parseDeclarators() throws SyntaxError{
-		if(debug==true) System.out.println("Running parseDecalarators");
+		display("Running parseDecalarators");
 		boolean isPrivate = false;
 		boolean isStatic = false;
 		if (currentToken.kind == Token.PRIVATE) {
@@ -270,9 +278,20 @@ public class Parser {
 	// if the type if Boolean/void we can just accept
 	//if the type is int or id we need to figure out if it is an int/id/int array/id array
 	public TypeDenoter parseType() throws SyntaxError{
-		if(debug==true) System.out.println("Running parseType");
+		display("Running parseType");
 		Token current = null;
 		switch(currentToken.kind){
+			case Token.STRING:
+				current = currentToken;
+				acceptIt();
+				if(currentToken.kind == Token.LBRACKET){
+					acceptIt();
+					accept(Token.RBRACKET, "parseType");	
+					return new ArrayType(new BaseType(TypeKind.STRING, current.position), current.position);
+				}
+				else {
+					return new BaseType(TypeKind.STRING, currentToken.position);
+				}	
 			case Token.INT:
 				current = currentToken;
 				acceptIt();
@@ -292,7 +311,7 @@ public class Parser {
 					accept(Token.RBRACKET, "parseType");	
 					return new ArrayType(new ClassType(new Identifier(current), current.position), current.position);					}
 				else {
-					return new ClassType(new Identifier(currentToken), current.position);					
+					return new ClassType(new Identifier(current), current.position);					
 				}	
 			case Token.BOOLEAN: 
 				current = currentToken;
@@ -316,10 +335,10 @@ public class Parser {
 	}
 	
 	public IntLiteral parseNum() throws SyntaxError {
-		if(debug==true) System.out.println("Running parseNum");
+		display("Running parseNum");
 		if (currentToken.kind == Token.NUM) {
 			previousTokenPosition = currentToken.position;
-			if(debug==true) System.out.println(currentToken.spelling);
+			display(currentToken.spelling);
 			currentToken = Scanner.scan();
 			return new IntLiteral(currentToken);
 		} else {
@@ -330,7 +349,7 @@ public class Parser {
 	
 	// ArgumentList ::= Expression ( , Expression )*
 	public ExprList parseArgumentList() throws SyntaxError{	
-		if(debug==true) System.out.println("Running parseArgumentList");
+		display("Running parseArgumentList");
 		ExprList arguments = new ExprList();
 		arguments.add(parseExpression());
 		while(currentToken.kind == Token.COMMA){
@@ -342,7 +361,7 @@ public class Parser {
 
 	//ParameterList ::= Type id ( , Type id )*
 	public ParameterDeclList parseParameterList() throws SyntaxError {
-		if(debug==true) System.out.println("Running parseParameterList");
+		display("Running parseParameterList");
 		ParameterDeclList parameters = new ParameterDeclList();
 		if (currentToken.kind == Token.VOID) {
 			syntacticError("Unexpected Token in parseParameterList", currentToken.spelling);
@@ -365,7 +384,7 @@ public class Parser {
 	}
 	
 	public Statement parseStatement() throws SyntaxError{
-		if(debug==true) System.out.println("Running parseStatement");
+		display("Running parseStatement");
 		Token current;
 		switch(currentToken.kind){
 			case Token.LCURLY:
@@ -586,76 +605,68 @@ public class Parser {
 					acceptIt();
 					Expression equalsExpr = parseExpression();
 					accept(Token.SEMICOLON, "parseStatement");
-					return new AssignStmt(new ThisRef(current.position), equalsExpr, current.position);
+					return new AssignStmt(ref, equalsExpr, current.position);
 				}						
 			case Token.BOOLEAN:
 				current = currentToken; 
 				parseType();
 				Expression i_boolean = null;
 				Expression e_boolean = null;
-				Identifier id_boolean = null;
-				if (currentToken.kind == Token.RBRACKET) {						
-					accept(Token.RBRACKET, "parseStatement");
-					id_boolean = parseIdentifier();
-					if (currentToken.kind == Token.EQUALS) {
-						accept(Token.EQUALS, "parseStatement");
-						e_boolean = parseExpression();
-						accept(Token.SEMICOLON, "parseStatement");
-						return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.BOOLEAN, current.position), id_boolean.spelling, current.position), e_boolean, current.position);
-					}
-					else if (currentToken.kind == Token.SEMICOLON) {
-						accept(Token.SEMICOLON, "parseStatement");
-						return new VarDeclStmt(new VarDecl(new ArrayType(new BaseType(TypeKind.BOOLEAN, current.position), current.position), id_boolean.spelling, current.position), e_boolean, current.position);
-					}
-				}
-				else {
-					id_boolean = parseIdentifier();					
-					if (currentToken.kind == Token.EQUALS) {
-						accept(Token.EQUALS, "parseStatement");
-						e_boolean = parseExpression();
-						accept(Token.SEMICOLON, "parseStatement");
-						return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.BOOLEAN, current.position), id_boolean.spelling, current.position), e_boolean, current.position);
-					}		
-					else if (currentToken.kind == Token.SEMICOLON) {
-						accept(Token.SEMICOLON, "parseStatement");
-						return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.BOOLEAN, current.position), id_boolean.spelling, current.position), null, current.position);
-					}		
+				Identifier id_boolean = null;				
+				id_boolean = parseIdentifier();					
+				if (currentToken.kind == Token.EQUALS) {
+					accept(Token.EQUALS, "parseStatement");
+					e_boolean = parseExpression();
+					accept(Token.SEMICOLON, "parseStatement");
+					return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.BOOLEAN, current.position), id_boolean.spelling, current.position), e_boolean, current.position);
 				}		
-				return null;				
+				else if (currentToken.kind == Token.SEMICOLON) {
+					accept(Token.SEMICOLON, "parseStatement");
+					return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.BOOLEAN, current.position), id_boolean.spelling, current.position), null, current.position);
+				}		
+				else {
+					return null;
+				}				
 			case Token.INT: 
 				current = currentToken;				
 				parseType();
 				Expression i_int = null;
 				Expression e_int = null;
-				Identifier id_int = null;
-				if (currentToken.kind == Token.RBRACKET) {						
-					accept(Token.RBRACKET, "parseStatement");
-					id_int = parseIdentifier();
-					if (currentToken.kind == Token.EQUALS) {						
-						accept(Token.EQUALS, "parseStatement");
-						e_int = parseExpression();
-						accept(Token.SEMICOLON, "parseStatement");
-						return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.INT, current.position), id_int.spelling, current.position), e_int, current.position);
-					}
-					else if (currentToken.kind == Token.SEMICOLON) {
-						accept(Token.SEMICOLON, "parseStatement");
-						return new VarDeclStmt(new VarDecl(new ArrayType(new BaseType(TypeKind.INT, current.position), current.position), id_int.spelling, current.position), e_int, current.position);
-					}
-				}
-				else {
-					id_int = parseIdentifier();					
-					if (currentToken.kind == Token.EQUALS) {
-						accept(Token.EQUALS, "parseStatement");
-						e_int = parseExpression();
-						accept(Token.SEMICOLON, "parseStatement");
-						return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.INT, current.position), id_int.spelling, current.position), e_int, current.position);
-					}		
-					else if (currentToken.kind == Token.SEMICOLON) {
-						accept(Token.SEMICOLON, "parseStatement");
-						return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.INT, current.position), id_int.spelling, current.position), null, current.position);
-					}		
+				Identifier id_int = null;				
+				id_int = parseIdentifier();					
+				if (currentToken.kind == Token.EQUALS) {
+					accept(Token.EQUALS, "parseStatement");
+					e_int = parseExpression();
+					accept(Token.SEMICOLON, "parseStatement");
+					return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.INT, current.position), id_int.spelling, current.position), e_int, current.position);
 				}		
-				return null;
+				else if (currentToken.kind == Token.SEMICOLON) {
+					accept(Token.SEMICOLON, "parseStatement");
+					return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.INT, current.position), id_int.spelling, current.position), null, current.position);
+				}		
+				else {
+					return null;
+				}					
+			case Token.STRING: 
+				current = currentToken;				
+				parseType();
+				Expression i_String = null;
+				Expression e_String = null;
+				Identifier id_String = null;			
+				id_int = parseIdentifier();					
+				if (currentToken.kind == Token.EQUALS) {
+					accept(Token.EQUALS, "parseStatement");
+					e_int = parseExpression();
+					accept(Token.SEMICOLON, "parseStatement");
+					return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.INT, current.position), id_int.spelling, current.position), e_int, current.position);
+				}		
+				else if (currentToken.kind == Token.SEMICOLON) {
+					accept(Token.SEMICOLON, "parseStatement");
+					return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.INT, current.position), id_int.spelling, current.position), null, current.position);
+				}		
+				else {
+					return null;
+				}					
 			case Token.RETURN:
 				current = currentToken;
 				acceptIt();
@@ -680,7 +691,7 @@ public class Parser {
 
 	// Reference ::= id | this | Reference . id 
 	public Reference parseReference() throws SyntaxError {
-		if(debug==true) System.out.println("Running parseReference");
+		display("Running parseReference");
 		Token current = currentToken;
 		if(currentToken.kind == Token.THIS) {
 			Token thisToken = currentToken;
@@ -706,7 +717,7 @@ public class Parser {
 	}
 	
 	public Expression parseExpression() throws SyntaxError{
-		if(debug==true) System.out.println("Running parseExpression");
+		display("Running parseExpression");
 		Token current = currentToken;
 		Expression expr1 = parseExpandedExpression();
 		if (Token.isBinop(currentToken.spelling)) {
@@ -729,7 +740,7 @@ public class Parser {
 		}
 	}
 	public Expression parseExpandedExpression() throws SyntaxError{
-		if(debug==true) System.out.println("Running parseExpandedExpression");
+		display("Running parseExpandedExpression");
 		Token current;
 		switch(currentToken.kind) {
 			case Token.FALSE:
@@ -826,6 +837,10 @@ public class Parser {
 				else {
 					return new RefExpr(ref, current.position);
 				}
+			case Token.NULL:
+				current = currentToken;
+				acceptIt();
+				return new NullExpr(current.position);
 			default:
 				current = currentToken;
 				Reference r = parseReference();
@@ -858,10 +873,10 @@ public class Parser {
 		}
 	}
 	public Operator parseOp() throws SyntaxError {
-		if(debug==true) System.out.println("Running parseOp");
+		display("Running parseOp");
 		if (currentToken.kind == Token.OPERATOR) {
 			previousTokenPosition = currentToken.position;
-			if(debug==true) System.out.println(currentToken.spelling);
+			display(currentToken.spelling);
 			currentToken = Scanner.scan();
 			return new Operator(currentToken);
 		} 
@@ -871,9 +886,9 @@ public class Parser {
 		}
 	}
 	public Operator parseBinop() throws SyntaxError{
-		if(debug==true) System.out.println("Running parseBinop");
+		display("Running parseBinop");
 		if (currentToken.kind == Token.OPERATOR) {
-			if(debug==true) System.out.println(currentToken.spelling);
+			display(currentToken.spelling);
 			previousTokenPosition = currentToken.position;
 			Token current = currentToken;			
 			currentToken = Scanner.scan();
@@ -886,9 +901,9 @@ public class Parser {
 	}
 	
 	public Operator parseUnop() throws SyntaxError {
-		if(debug==true) System.out.println("Running parseUnop");
+		display("Running parseUnop");
 		if (currentToken.kind == Token.OPERATOR) {
-			if(debug==true) System.out.println(currentToken.spelling);
+			display(currentToken.spelling);
 			previousTokenPosition = currentToken.position;			
 			Token current = currentToken;
 			currentToken = Scanner.scan();

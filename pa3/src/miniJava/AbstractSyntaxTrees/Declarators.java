@@ -26,9 +26,13 @@ public class Declarators extends Declaration {
     public boolean isStatic;
     public TypeDenoter type;
 
-    @Override
     public <A, R> R visit(Visitor<A, R> v, A o) {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    public <R> void visit(Traveller<R> v) {
+        // TODO Auto-generated method stub
+        return;
     }
 }

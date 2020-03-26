@@ -192,8 +192,10 @@ public class ASTDisplay implements Visitor<String,Object> {
     
     public Object visitVardeclStmt(VarDeclStmt stmt, String arg){
         show(arg, stmt);
-        stmt.varDecl.visit(this, indent(arg));	
-        stmt.initExp.visit(this, indent(arg));
+        stmt.varDecl.visit(this, indent(arg));
+        if (stmt.initExp != null) {
+            stmt.initExp.visit(this, indent(arg));
+        }        
         return null;
     }
     
@@ -306,6 +308,11 @@ public class ASTDisplay implements Visitor<String,Object> {
         expr.sizeExpr.visit(this, indent(arg));
         return null;
     }
+
+    public Object visitNewStringExpr(NewStringExpr expr, String arg) {
+        show(arg, expr);
+        return null;
+    }
     
     public Object visitNewObjectExpr(NewObjectExpr expr, String arg){
         show(arg, expr);
@@ -313,6 +320,10 @@ public class ASTDisplay implements Visitor<String,Object> {
         return null;
     }
     
+    public Object visitNullExpr(NullExpr expr, String arg) {
+        show(arg, expr);
+        return null;
+    }
 
 	///////////////////////////////////////////////////////////////////////////////
 	//
@@ -362,6 +373,11 @@ public class ASTDisplay implements Visitor<String,Object> {
     
     public Object visitBooleanLiteral(BooleanLiteral bool, String arg){
         show(arg, quote(bool.spelling) + " " + bool.toString());
+        return null;
+    }
+
+    public Object visitNullLiteral(NullLiteral nullLiteral, String arg) {
+        show(arg, quote(nullLiteral.spelling) + " " + nullLiteral.toString());
         return null;
     }
 }

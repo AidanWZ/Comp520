@@ -5,7 +5,9 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.SyntacticAnalyzer.IdentificationError;
 import miniJava.SyntacticAnalyzer.SourcePosition;
+import miniJava.SyntacticAnalyzer.TypeError;
 
 public abstract class AST {
 
@@ -22,6 +24,8 @@ public abstract class AST {
   }
 
   public abstract <A,R> R visit(Visitor<A,R> v, A o);
+
+  public abstract <R> void visit(Traveller<R> v) throws TypeError, IdentificationError;
 
   public SourcePosition posn;
 }

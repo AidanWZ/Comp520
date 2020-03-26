@@ -6,7 +6,9 @@
 
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.SyntacticAnalyzer.IdentificationError;
 import miniJava.SyntacticAnalyzer.SourcePosition;
+import miniJava.SyntacticAnalyzer.TypeError;
 
 public class ArrayType extends TypeDenoter {
 
@@ -17,7 +19,11 @@ public class ArrayType extends TypeDenoter {
 	        
 	    public <A,R> R visit(Visitor<A,R> v, A o) {
 	        return v.visitArrayType(this, o);
-	    }
+		}
+		
+		public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
+			v.visitArrayType(this);
+		}
 
 	    public TypeDenoter eltType;
 	}

@@ -6,6 +6,8 @@
 package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.SourcePosition;
+import miniJava.SyntacticAnalyzer.TypeError;
+import miniJava.SyntacticAnalyzer.IdentificationError;
 
 public class ClassType extends TypeDenoter
 {
@@ -16,6 +18,10 @@ public class ClassType extends TypeDenoter
             
     public <A,R> R visit(Visitor<A,R> v, A o) {
         return v.visitClassType(this, o);
+    }
+
+    public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
+        v.visitClassType(this);
     }
 
     public Identifier className;
