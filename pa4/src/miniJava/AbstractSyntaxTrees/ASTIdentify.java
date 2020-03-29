@@ -97,6 +97,8 @@ public class ASTIdentify implements Traveller<String> {
         scopeIdentificationTable.set(0, temp);        
         //loading file classes and members
         loadClassMembers();
+        //checking for required main method (PA4)
+        checkForMain();
     }
 
     public void loadClassMembers() {
@@ -187,6 +189,22 @@ public class ASTIdentify implements Traveller<String> {
         allMembers.add(new Stack<HashMap<String, Declaration>>());
         allMembers.get(index).push(new HashMap<String, Declaration>());
         allMembers.get(index).set(0, classItems);
+    }
+
+    public void checkForMain(){
+        if (searchAllMembers("main") != null) {
+            Declaration candidate = searchAllMembers("main");
+            if (candidate.getClass().equals(new MethodDecl(new FieldDecl(true, true, null, null, new SourcePosition()), new ParameterDeclList(), new StatementList(), new SourcePosition()).getClass())) {
+                if (((MethodDecl) candidate).parameterDeclList.size() == 1) {
+                    if (((MethodDecl) candidate).parameterDeclList) {
+
+                    }
+                }
+            }
+        }
+        else {    
+
+        }
     }
 
     public boolean isSameType(TypeKind type1, TypeKind type2) {

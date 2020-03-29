@@ -14,7 +14,8 @@ public class ArrayType extends TypeDenoter {
 
 	    public ArrayType(TypeDenoter eltType, SourcePosition posn){
 	        super(TypeKind.ARRAY, posn);
-	        this.eltType = eltType;
+			this.eltType = eltType;
+			this.length = 0;
 	    }
 	        
 	    public <A,R> R visit(Visitor<A,R> v, A o) {
@@ -25,6 +26,11 @@ public class ArrayType extends TypeDenoter {
 			v.visitArrayType(this);
 		}
 
-	    public TypeDenoter eltType;
+		public TypeDenoter eltType;
+		private int length;
+
+		public int length() {
+			return this.length;
+		}
 	}
 
