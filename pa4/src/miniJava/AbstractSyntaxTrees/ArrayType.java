@@ -27,6 +27,10 @@ public class ArrayType extends TypeDenoter {
 		}
 
 		public TypeDenoter eltType;
-		public int length;
+		private int length;
+
+		public int length() {
+			return this.length;
+		}
 	}
 

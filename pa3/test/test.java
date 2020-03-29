@@ -1,12 +1,19 @@
-class Baz {
-    private static int x;
-    public static System y;
-    public void temp(int z) {
-        y.out.println();
-        this.x = 2;
+/**
+ * COMP 520
+ * Identification
+ */
+class Pass303 {
+
+    // public static void main(String[] args) {}
+
+    public void f() {
+        C = 5;
     }
+
+    int C;  // hides class C at member level
+    
 }
 
-class Foo {
-    private static int poo;
+class C {
+    int x;
 }
