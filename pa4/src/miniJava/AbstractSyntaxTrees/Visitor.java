@@ -60,4 +60,6 @@ public interface Visitor<ArgType,ResultType> {
     public ResultType visitBooleanLiteral(BooleanLiteral bool, ArgType arg);
 
 	public ResultType visitNullLiteral(NullLiteral nullLiteral, ArgType o);
+
+	public ResultType visitStringLiteral(StringLiteral stringLiteral, ArgType o);
 }
