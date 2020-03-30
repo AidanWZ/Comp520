@@ -45,9 +45,10 @@ public class ASTIdentify implements Traveller<String> {
 
     public String className;
     public String methodName;
-    public TypeKind returnKind;
+    public TypeDenoter returnKind;
     public String referenceName;
     public boolean methodStatic;
+    public boolean staticRef;
 
     public ASTIdentify(ErrorReporter idReporter, ErrorReporter typeReporter, AST ast) {
         this.scopeIdentificationTable = new Stack<HashMap<String, Declaration>>();
@@ -97,6 +98,7 @@ public class ASTIdentify implements Traveller<String> {
         scopeIdentificationTable.set(0, temp);        
         //loading file classes and members
         loadClassMembers();
+        //displayAllMembers();
     }
 
     public void loadClassMembers() {
@@ -111,8 +113,7 @@ public class ASTIdentify implements Traveller<String> {
             for (FieldDecl f: c.fieldDeclList) { 
                 allMembers.get(index).peek().put(f.name, f);                
             }
-            for (MethodDecl m: c.methodDeclList) {
-                returnKind = m.type.typeKind;   
+            for (MethodDecl m: c.methodDeclList) { 
                 allMembers.get(index).peek().put(m.name, m); 
                 if (m.parameterDeclList.size() > 0) {
                     allMembers.get(index).push(new HashMap<String, Declaration>());
@@ -189,7 +190,17 @@ public class ASTIdentify implements Traveller<String> {
         allMembers.get(index).set(0, classItems);
     }
 
-    public boolean isSameType(TypeKind type1, TypeKind type2) {
+    public boolean isSameType(TypeDenoter type1, TypeDenoter type2) {
+        if (type1.getClass().equals(type2.getClass())) {
+            if (isSameTypeKind(type1.typeKind, type2.typeKind)) {
+                return true;
+            }
+        }
+        return false;
+        
+    }
+
+    public boolean isSameTypeKind(TypeKind type1, TypeKind type2) {
         if (type1.equals(type2)) {
             if (type1.equals(TypeKind.UNSUPPORTED) || type2.equals(TypeKind.UNSUPPORTED)) {
                 return false;
@@ -289,6 +300,9 @@ public class ASTIdentify implements Traveller<String> {
     }
 
     public Declaration searchAllMembers(String memberName) {
+        if (search(memberName) != null) {
+            return search(memberName);
+        }
         // for each class
         for (Stack<HashMap<String, Declaration>> clas: allMembers) {
             Iterator<HashMap<String, Declaration>> scopeIterator = clas.iterator();
@@ -417,8 +431,9 @@ public class ASTIdentify implements Traveller<String> {
             scopeIdentificationTable.peek().put(f.name, f);     
             f.visit(this);            
         }
+        staticRef = false;
         for (MethodDecl m: clas.methodDeclList) {
-            returnKind = m.type.typeKind;  
+            returnKind = m.type;  
             methodStatic = m.isStatic;
             methodName = m.name;
             scopeIdentificationTable.peek().put(m.name, m);         
@@ -537,7 +552,7 @@ public class ASTIdentify implements Traveller<String> {
         stmt.varDecl.visit(this);
         if (stmt.initExp != null) { 
             stmt.initExp.visit(this);        
-            if (isSameType(stmt.varDecl.type.typeKind, stmt.initExp.type)) {                
+            if (isSameTypeKind(stmt.varDecl.type.typeKind, stmt.initExp.type)) {                
                 stmt.varDecl.type.typeKind = stmt.initExp.type;
             }
             else {
@@ -568,8 +583,8 @@ public class ASTIdentify implements Traveller<String> {
                 }           
                 else {
                     //if the reference is a class
-                    if (isSameType(search(((QualRef)stmt.ref).id.spelling).type.typeKind, TypeKind.CLASS)) {                
-                        if (isSameType(search(((QualRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
+                    if (isSameTypeKind(search(((QualRef)stmt.ref).id.spelling).type.typeKind, TypeKind.CLASS)) {                
+                        if (isSameTypeKind(search(((QualRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
                             
                         }
                         else {
@@ -577,7 +592,7 @@ public class ASTIdentify implements Traveller<String> {
                         }
                     }
                     else {
-                        if (isSameType(search(((QualRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
+                        if (isSameTypeKind(search(((QualRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
                             
                         }
                         else {
@@ -588,7 +603,7 @@ public class ASTIdentify implements Traveller<String> {
             }  
             // if the reference is a member of the current class
             else if (search(((QualRef)stmt.ref).id.spelling) != null) {              
-                if (isSameType(searchAllMembers(((IdRef)((QualRef)stmt.ref).ref).id.spelling).type.typeKind, stmt.val.type)) {
+                if (isSameTypeKind(searchAllMembers(((IdRef)((QualRef)stmt.ref).ref).id.spelling).type.typeKind, stmt.val.type)) {
                     
                 }
                 else {
@@ -603,8 +618,8 @@ public class ASTIdentify implements Traveller<String> {
             }           
             else {
                 //if the reference is a class
-                if (isSameType(search(((IdRef)stmt.ref).id.spelling).type.typeKind, TypeKind.CLASS)) {                
-                    if (isSameType(search(((IdRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
+                if (isSameTypeKind(search(((IdRef)stmt.ref).id.spelling).type.typeKind, TypeKind.CLASS)) {                
+                    if (isSameTypeKind(search(((IdRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
                         
                     }
                     else {
@@ -612,7 +627,7 @@ public class ASTIdentify implements Traveller<String> {
                     }
                 }
                 else {
-                    if (isSameType(search(((IdRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
+                    if (isSameTypeKind(search(((IdRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
                         
                     }
                     else {
@@ -625,9 +640,9 @@ public class ASTIdentify implements Traveller<String> {
     }
     
     public String visitIxAssignStmt(IxAssignStmt stmt) throws TypeError, IdentificationError {
-        if (isSameType(stmt.ref.decl.type.typeKind, TypeKind.ARRAY) && // ref type must be array type
-            isSameType(stmt.ix.type, TypeKind.INT) &&                  // index must be int type
-            isSameType(stmt.ref.decl.type.typeKind, stmt.exp.type)) {  // assignment type must equal reference type
+        if (isSameTypeKind(stmt.ref.decl.type.typeKind, TypeKind.ARRAY) && // ref type must be array type
+            isSameTypeKind(stmt.ix.type, TypeKind.INT) &&                  // index must be int type
+            isSameTypeKind(stmt.ref.decl.type.typeKind, stmt.exp.type)) {  // assignment type must equal reference type
             stmt.ref.visit(this);
             stmt.ix.visit(this);
             stmt.exp.visit(this);
@@ -653,7 +668,7 @@ public class ASTIdentify implements Traveller<String> {
             int counter = 0;
             for (Expression e: al) { 
                 e.visit(this);       
-                if (isSameType(e.type, ((MethodDecl)searchAllMembers(((IdRef)temp).id.spelling)).parameterDeclList.get(counter).type.typeKind)) {
+                if (isSameTypeKind(e.type, ((MethodDecl)searchAllMembers(((IdRef)temp).id.spelling)).parameterDeclList.get(counter).type.typeKind)) {
                     
                 }
                 else {
@@ -667,7 +682,7 @@ public class ASTIdentify implements Traveller<String> {
             ExprList al = stmt.argList;
             int counter = 0;
             for (Expression e: al) {
-                if (isSameType(e.type, ((MethodDecl) stmt.methodRef.decl).parameterDeclList.get(counter).type.typeKind)) {
+                if (isSameTypeKind(e.type, ((MethodDecl) stmt.methodRef.decl).parameterDeclList.get(counter).type.typeKind)) {
                     e.visit(this);
                 }
                 else {
@@ -682,15 +697,15 @@ public class ASTIdentify implements Traveller<String> {
     public String visitReturnStmt(ReturnStmt stmt) throws TypeError, IdentificationError {        
         if (stmt.returnExpr != null) {
             stmt.returnExpr.visit(this);
-            if (isSameType(this.returnKind, stmt.returnExpr.type)) {
+            if (isSameTypeKind(this.returnKind.typeKind, stmt.returnExpr.type)) {
                 
             }
             else {
-                typeError(stmt.posn.start, "visitReturnStmt", "Type mismatch: cannot convert from " + stmt.returnExpr.type + " to " + returnKind);
+                typeError(stmt.posn.start, "visitReturnStmt", "Type mismatch: cannot convert from " + stmt.returnExpr.type + " to " + this.returnKind.typeKind);
             }            
         }
         else if (stmt.returnExpr == null) {
-            if (isSameType(this.returnKind, TypeKind.VOID)) {
+            if (isSameTypeKind(this.returnKind.typeKind, TypeKind.VOID)) {
 
             }
             else {
@@ -703,7 +718,7 @@ public class ASTIdentify implements Traveller<String> {
     public String visitIfStmt(IfStmt stmt) throws TypeError, IdentificationError {
         if (stmt.elseStmt == null) {
             stmt.cond.visit(this);
-            if (isSameType(stmt.cond.type, TypeKind.BOOLEAN)) {                                
+            if (isSameTypeKind(stmt.cond.type, TypeKind.BOOLEAN)) {                                
                 if (((BlockStmt) stmt.thenStmt).sl.size() == 1) {
                     if (((BlockStmt) stmt.thenStmt).sl.get(0).getClass().equals(new VarDeclStmt(null, null, null).getClass())) {
                         identificationError(stmt.posn.start, "visitIfStmt", "Cannot have only var declaration in conditional branch");
@@ -720,7 +735,7 @@ public class ASTIdentify implements Traveller<String> {
             }
         }
         else if (stmt.elseStmt != null) {
-            if (isSameType(stmt.cond.type, TypeKind.BOOLEAN)) {
+            if (isSameTypeKind(stmt.cond.type, TypeKind.BOOLEAN)) {
                 stmt.cond.visit(this);
                 if (((BlockStmt) stmt.thenStmt).sl.size() == 1) {
                     if (((BlockStmt) stmt.thenStmt).sl.get(0).getClass().equals(new VarDeclStmt(null, null, null).getClass())) {
@@ -747,7 +762,7 @@ public class ASTIdentify implements Traveller<String> {
     }
     
     public String visitWhileStmt(WhileStmt stmt) throws TypeError, IdentificationError {
-        if (isSameType(stmt.cond.type, TypeKind.BOOLEAN)) {
+        if (isSameTypeKind(stmt.cond.type, TypeKind.BOOLEAN)) {
             stmt.cond.visit(this);
             stmt.body.visit(this);
         }
@@ -762,7 +777,7 @@ public class ASTIdentify implements Traveller<String> {
     ///////////////////////////////////////////////////////////////////////////////
 
     public String visitUnaryExpr(UnaryExpr expr) throws TypeError, IdentificationError {
-        if (expr.operator.spelling.equals("!") && isSameType(expr.expr.type, TypeKind.BOOLEAN)) {
+        if (expr.operator.spelling.equals("!") && isSameTypeKind(expr.expr.type, TypeKind.BOOLEAN)) {
             expr.operator.visit(this);
             expr.expr.visit(this);
             expr.type = expr.expr.type;
@@ -770,7 +785,7 @@ public class ASTIdentify implements Traveller<String> {
         else {
             typeError(expr.posn.start, "visitUnaryExpr", "The operator ! is undefined for the argument type(s) " + expr.expr.type);
         }
-        if (expr.operator.spelling.equals("-") && isSameType(expr.expr.type, TypeKind.INT)) {
+        if (expr.operator.spelling.equals("-") && isSameTypeKind(expr.expr.type, TypeKind.INT)) {
             expr.operator.visit(this);
             expr.expr.visit(this);
             expr.type = expr.expr.type;
@@ -785,7 +800,7 @@ public class ASTIdentify implements Traveller<String> {
         expr.operator.visit(this);
         expr.left.visit(this);
         expr.right.visit(this);
-        if (isSameType(expr.left.type, expr.right.type)) {            
+        if (isSameTypeKind(expr.left.type, expr.right.type)) {            
             if (expr.operator.spelling.equals("==")) {
                 expr.type = TypeKind.BOOLEAN;
             }
@@ -811,16 +826,16 @@ public class ASTIdentify implements Traveller<String> {
     }
     
     public String visitIxExpr(IxExpr ie) throws TypeError, IdentificationError {
-        if (isSameType(ie.ixExpr.type, TypeKind.INT) && isSameType(ie.type, ie.ref.decl.type.typeKind)) {
+        if (isSameTypeKind(ie.ixExpr.type, TypeKind.INT) && isSameTypeKind(ie.type, ie.ref.decl.type.typeKind)) {
             ie.ref.visit(this);
             ie.ixExpr.visit(this);
             ie.type = ie.ref.decl.type.typeKind;
         }
         else {
-            if (!isSameType(ie.ixExpr.type, TypeKind.INT)) {
+            if (!isSameTypeKind(ie.ixExpr.type, TypeKind.INT)) {
                 typeError(ie.posn.start, "visitIxExpr", "Type mismatch: cannot convert from " + ie.ixExpr.type + " to int");
             }
-            else if(!isSameType(ie.type, ie.ref.decl.type.typeKind)) {
+            else if(!isSameTypeKind(ie.type, ie.ref.decl.type.typeKind)) {
                 typeError(ie.posn.start, "visitIxExpr", "Type mismatch: cannot convert from " + ie.type + " to " + ie.ref.decl.type.typeKind);
             }
             
@@ -833,13 +848,30 @@ public class ASTIdentify implements Traveller<String> {
         ExprList al = expr.argList;
         for (Expression e: al) {
             e.visit(this);
-        }   
-        expr.type = expr.functionRef.decl.type.typeKind;
+        }          
+        //if parameter list types and lengths match
+        if (((MethodDecl)searchAllMembers((((IdRef)expr.functionRef).id.spelling))).parameterDeclList.size() != expr.argList.size()) {
+            identificationError(expr.posn.start, "visitCallExpr", "length of supplied arguments " + expr.argList.size() + "does not match the method declaration size " + ((MethodDecl)searchAllMembers((((IdRef)expr.functionRef).id.spelling))).parameterDeclList.size());
+        }
+        else {
+            ParameterDeclList params = ((MethodDecl)searchAllMembers((((IdRef)expr.functionRef).id.spelling))).parameterDeclList;
+            int counter = 0;
+            for (Expression e : expr.argList) {
+                if (isSameTypeKind(e.type, params.get(counter).type.typeKind)) {                    
+                    
+                }
+                else {
+                    identificationError(expr.posn.start, "visitCallExpr", "parameter at position " + (counter + 1) + " does not match the declaration type");
+                }
+                counter++;
+            }
+        }
+        expr.type = searchAllMembers(((IdRef)expr.functionRef).id.spelling).type.typeKind;
         return "";     
     }
     
-    public String visitLiteralExpr(LiteralExpr expr) throws TypeError, IdentificationError {
-        expr.lit.visit(this);  
+    public String visitLiteralExpr(LiteralExpr expr) throws TypeError, IdentificationError {        
+        expr.lit.visit(this);          
         expr.type = expr.lit.type;
         return "";      
     }
@@ -851,7 +883,7 @@ public class ASTIdentify implements Traveller<String> {
     }
 
     public String visitNewArrayExpr(NewArrayExpr expr) throws TypeError, IdentificationError {
-        if (isSameType(expr.sizeExpr.type, TypeKind.INT)) {
+        if (isSameTypeKind(expr.sizeExpr.type, TypeKind.INT)) {
             expr.eltType.visit(this);
             expr.sizeExpr.visit(this);
             expr.type = TypeKind.ARRAY;
@@ -894,7 +926,7 @@ public class ASTIdentify implements Traveller<String> {
         return "";
     }
     
-    public String visitIdRef(IdRef ref) throws TypeError, IdentificationError {
+    public String visitIdRef(IdRef ref) throws TypeError, IdentificationError {        
         ref.id.visit(this);         
         // check for static membership
         if (findMember(ref.id.spelling) != null) {
@@ -914,215 +946,55 @@ public class ASTIdentify implements Traveller<String> {
     }
         
     public String visitQRef(QualRef qr) throws TypeError, IdentificationError { 
+        if (qr.ref.getClass().equals(new QualRef(null, null, null).getClass())) {
+            if (((MemberDecl)searchAllMembers(((QualRef)qr.ref).id.spelling)).isStatic) {
+                staticRef = true;
+            }
+        }        
         qr.id.visit(this);
         qr.ref.visit(this);
-        FieldDeclList fields = new FieldDeclList();
-        MethodDeclList methods = new MethodDeclList();
-        boolean fieldValid = false;
-        boolean methodValid = false;
-        FieldDecl tempField = null;
-        MethodDecl tempMethod = null;
+        Declaration temp = null;
         //if the qref is a this reference
-        if (qr.ref.getClass().equals(new ThisRef(new SourcePosition()).getClass())) {
-            fields = findFields(className);
-            methods = findMethods(className);
-            //check if the reference is a field reference
-            for (FieldDecl f: fields) {  
-                //within a static method in a class a reference cannot directly access a non-static member
-                if ((methodStatic && !f.isStatic)) {
+        if (qr.ref.getClass().equals(new ThisRef(new SourcePosition()).getClass())) {  
+            temp = findMember(qr.id.spelling);      
+            if (temp == null) {
+                identificationError(qr.posn.start, "visitQRef", qr.id.spelling + " cannot be resolved or is not a field");
+            }
+            else {
+                if (!methodStatic) {
+                    qr.decl = temp;
+                }
+                else {
                     identificationError(qr.posn.start, "visitQRef", "Cannot use this in a static context");
                 }
-                if (f.name.equals(qr.id.spelling)) {
-                    fieldValid = true;
-                    tempField = f;
-                    break;
-                }
-            }
-            //check if the reference is a method reference
-            for (MethodDecl m: methods) {
-                //within a static method in a class a reference cannot directly access a non-static member
-                if ((methodStatic && !m.isStatic)) {
-                    identificationError(qr.posn.start, "visitQRef", "Cannot use this in a static context");
-                }
-                if (m.name.equals(qr.id.spelling)) {
-                    methodValid = true;
-                    tempMethod = m;
-                    break;
-                }
-            }
+            }  
         } 
         //if the reference is an member of the current class
-        else if (search(qr.id.spelling) != null) {            
-            if (!((FieldDecl)search(qr.id.spelling)).isStatic && methodStatic) {
-                identificationError(qr.posn.start, "visitQRef", "1Cannot make a static reference to the non-static field " + qr.id.spelling);
+        else if (search(qr.id.spelling) != null) {     
+            Reference ref = ((QualRef)qr.ref).ref;            
+            while (ref.getClass().equals(new QualRef(null, null, null).getClass())) {
+                ref.visit(this);
+                ref = ((QualRef)qr.ref).ref; 
+                System.out.println(((MemberDecl)searchAllMembers(((QualRef)qr.ref).id.spelling)).isStatic);                         
+            }  
+            ((IdRef)ref).visit(this);                    
+            if (((MemberDecl)searchAllMembers(((IdRef)ref).id.spelling)).isStatic || staticRef) {
+                qr.decl = searchAllMembers(((IdRef)ref).id.spelling);
             }
             else {
-                if (search(qr.id.spelling).getClass().equals(new FieldDecl(true, true, null, null, new SourcePosition()).getClass())) {
-                    fields.add(findField(((FieldDecl)search(qr.id.spelling)).name));
-                }
-                else {
-                    methods.add(findMethod(((FieldDecl)search(qr.id.spelling)).name));
-                }                                
-            }            
-            //check if the reference is a field reference
-            for (FieldDecl f: fields) {                                    
-                //within a static method in a class a reference cannot directly access a non-static member
-                if (methodStatic && !f.isStatic) {
-                    identificationError(qr.posn.start, "visitQRef", "2Cannot make a static reference to the non-static field " + qr.id.spelling);
-                }
-                //check for private conflict
-                System.out.println(((IdRef)((QualRef)qr.ref).ref).id.spelling);
-                if (((FieldDecl) searchAllMembers(((IdRef)((QualRef)qr.ref).ref).id.spelling)).isPrivate) {
-                    identificationError(qr.posn.start, "visitQRef", "The field " + qr.id.spelling + "." + ((IdRef) qr.ref).id.spelling + " is not visible");
-                } 
-                //find the field
-                if (f.name.equals(qr.id.spelling)) {
-                    fieldValid = true;
-                    tempField = f;
-                    break;
-                }
-            }
-            //check if the reference is a method reference            
-            for (MethodDecl m: methods) {                                                        
-                //within a static method in a class a reference cannot directly access a non-static member
-                if ((methodStatic && !m.isStatic)) {
-                    identificationError(qr.posn.start, "visitQRef", "3Cannot make a static reference to the non-static field " + qr.id.spelling);
-                }
-                //check for private conflict
-                if (((MethodDecl) search(qr.id.spelling)).isPrivate) {
-                    identificationError(qr.posn.start, "visitQRef", "The field " + qr.id.spelling + "." + ((IdRef) qr.ref).id.spelling + " is not visible");
-                } 
-                //find the method
-                if (m.name.equals(qr.ref.decl.name)) {
-                    methodValid = true;
-                    tempMethod = m;
-                    break;
-                }
-            }
+                identificationError(qr.posn.start, "visitQRef", "Class member " + ((IdRef)ref).id.spelling + " must be declared static");
+            }             
         }
-        //member of different class
+        //if reference is member of another class
         else {
-            //if a member of a different class
-            if (searchAllMembers(((IdRef)qr.ref).id.spelling).getClass().equals(new FieldDecl(true, true, null, null, new SourcePosition()).getClass())) {
-                fields.add((FieldDecl)searchAllMembers(((IdRef)qr.ref).id.spelling));
+            ((IdRef)qr.ref).visit(this);                  
+            if (((MemberDecl)searchAllMembers(((IdRef)qr.ref).id.spelling)).isStatic  || staticRef) {
+                qr.decl = searchAllMembers(((IdRef)qr.ref).id.spelling);
             }
-            else if (searchAllMembers(((IdRef)qr.ref).id.spelling).getClass().equals(new MethodDecl(new FieldDecl(true, true, null, null, new SourcePosition()), new ParameterDeclList(), new StatementList(), new SourcePosition()).getClass())) {
-                methods.add((MethodDecl)searchAllMembers(((IdRef)qr.ref).id.spelling));
-            }                        
-            //check if the reference is a field reference
-            for (FieldDecl f: fields) {
-                //within a static method in a class a reference cannot directly access a non-static member
-                if (methodStatic && !f.isStatic) {
-                    identificationError(qr.posn.start, "visitQRef", "4Cannot make a static reference to the non-static field " + qr.id.spelling);
-                }
-                //check for private conflict
-                if (((FieldDecl) searchAllMembers(((IdRef) qr.ref).id.spelling)).isPrivate) {
-                    identificationError(qr.posn.start, "visitQRef", "The field " + qr.id.spelling + "." + ((IdRef) qr.ref).id.spelling + " is not visible");
-                } 
-                if (f.name.equals(((IdRef) qr.ref).id.spelling)) {
-                    fieldValid = true;
-                    tempField = f;
-                    break;
-                }
-            }
-            //check if the reference is a method reference            
-            for (MethodDecl m: methods) {                                                
-                //within a static method in a class a reference cannot directly access a non-static member
-                if ((methodStatic && !m.isStatic)) {
-                    identificationError(qr.posn.start, "visitQRef", "5Cannot make a static reference to the non-static field " + qr.id.spelling);
-                }
-                // if decl is null then search current class members
-                if (search(qr.id.spelling) != null) {
-                    if (findSpecifiedMember(((ClassType)search(qr.id.spelling).type).className.spelling, ((IdRef) qr.ref).id.spelling) != null) {
-                        methodValid = true;
-                        tempMethod = (MethodDecl) findSpecifiedMember(((ClassType)search(qr.id.spelling).type).className.spelling, ((IdRef) qr.ref).id.spelling);
-                        break;
-                    }
-                }
-                if (m.name.equals(searchAllMembers(((IdRef)qr.ref).id.spelling).name)) {   
-                                                    
-                    methodValid = true;
-                    tempMethod = m;
-                    break;
-                }
-            }         
-        }     
-             
-        if (fieldValid) {
-            //if the field is a this reference
-            if (qr.ref.getClass().equals(new ThisRef(new SourcePosition()).getClass())) {
-                //check for static membership
-                if (isSameType(findField(qr.id.spelling).type.typeKind, TypeKind.CLASS)) {
-                    if (findField(qr.id.spelling).isStatic) {
-
-                    }
-                    else {
-                        identificationError(qr.posn.start, "visitQRef", "Non static reference to static member");
-                    }
-                }
-                qr.decl = findField(qr.id.spelling);
-            }
-            //if the reference is an member of the current class
-            else if (search(qr.id.spelling) != null) {
-                if (((MemberDecl)findMember(qr.id.spelling)).isStatic) {
-
-                }
-                else {
-                    identificationError(qr.posn.start, "visitQRef", "1Non static reference to static member");
-                }                
-            }     
-            //if reference is member of another class       
             else {
-                //check for static membership
-                if (isSameType(searchAllMembers(((IdRef) qr.ref).id.spelling).type.typeKind, TypeKind.CLASS)) {
-                    if (((MemberDecl)qr.ref.decl).isStatic) {
-
-                    }
-                    else {
-                        identificationError(qr.posn.start, "visitQRef", "2Non static reference to static member");
-                    }
-                }
-                qr.decl = tempField;
-            }            
-        }
-        else if (methodValid) {            
-            // if the reference is a this reference
-            if (qr.ref.getClass().equals(new ThisRef(new SourcePosition()).getClass())) {
-                //check for static membership
-                if (isSameType(findField(qr.id.spelling).type.typeKind, TypeKind.CLASS)) {
-                    if (findField(qr.id.spelling).isStatic) {
-
-                    }
-                    else {
-                        identificationError(qr.posn.start, "visitQRef", "Non static reference to static member");
-                    }
-                }
-            }
-            //if the reference is an instance of the current class
-            else if (search(qr.id.spelling) != null) {
-                if (((MemberDecl)findMember(((IdRef)qr.ref).id.spelling)).isStatic) {
-
-                }
-                else {
-                    identificationError(qr.posn.start, "visitQRef", "Non static reference to static member");
-                }             
-            }       
-            else {
-                //check for static membership
-                if (isSameType(searchAllMembers(qr.id.spelling).type.typeKind, TypeKind.CLASS)) {
-                    if (((MemberDecl)searchAllMembers(qr.id.spelling)).isStatic) {
-
-                    }
-                    else {
-                        identificationError(qr.posn.start, "visitQRef", "Non static reference to static member");
-                    }
-                }
-                qr.decl = searchAllMembers(qr.id.spelling);
-            }            
-        }
-        else {
-            identificationError(qr.posn.start, "visitQRef", "term " + qr.id.spelling + " does not exist");
-        }
+                identificationError(qr.posn.start, "visitQRef", "1Class member " + ((IdRef)qr.ref).id.spelling + " must be declared static");
+            }        
+        }    
         return "";      
     }
     
@@ -1155,5 +1027,9 @@ public class ASTIdentify implements Traveller<String> {
     public String visitBooleanLiteral(BooleanLiteral bool) throws TypeError, IdentificationError {
         bool.type = TypeKind.BOOLEAN;
         return "";
+    }
+
+    public void visitStringLiteral(StringLiteral stringLiteral) throws TypeError, IdentificationError {
+        stringLiteral.type = TypeKind.STRING;
     }
 }

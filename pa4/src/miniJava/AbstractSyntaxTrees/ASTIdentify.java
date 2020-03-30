@@ -49,7 +49,7 @@ public class ASTIdentify implements Traveller<String> {
     public String referenceName;
     public boolean methodStatic;
 
-    public ASTIdentify(ErrorReporter idReporter, ErrorReporter typeReporter, AST ast) {
+    public ASTIdentify(ErrorReporter idReporter, ErrorReporter typeReporter, AST ast) throws IdentificationError {
         this.scopeIdentificationTable = new Stack<HashMap<String, Declaration>>();
         this.ast = ast;
         this.allMembers = new ArrayList<Stack<HashMap<String, Declaration>>>();
@@ -191,20 +191,20 @@ public class ASTIdentify implements Traveller<String> {
         allMembers.get(index).set(0, classItems);
     }
 
-    public void checkForMain(){
+    public void checkForMain() throws IdentificationError {
         if (searchAllMembers("main") != null) {
             Declaration candidate = searchAllMembers("main");
             if (candidate.getClass().equals(new MethodDecl(new FieldDecl(true, true, null, null, new SourcePosition()), new ParameterDeclList(), new StatementList(), new SourcePosition()).getClass())) {
-                if (((MethodDecl) candidate).parameterDeclList.size() == 1) {
-                    if (((MethodDecl) candidate).parameterDeclList) {
-
-                    }
+                if (((MethodDecl) candidate).parameterDeclList.size() == 1 && !((MethodDecl) candidate).isPrivate && ((MethodDecl) candidate).isStatic) {                                        
+                    if (((MethodDecl) candidate).parameterDeclList.get(0).type.getClass().equals(new ArrayType(new BaseType(TypeKind.STRING, new SourcePosition()), new SourcePosition()).getClass())) {                        
+                        if (isSameType(((ArrayType)((MethodDecl) candidate).parameterDeclList.get(0).type).eltType.typeKind, TypeKind.STRING)) {                            
+                            return;
+                        }
+                    }                    
                 }
             }
-        }
-        else {    
-
-        }
+        }   
+        identificationError(0, "checkForMain", "no main method present in package");            
     }
 
     public boolean isSameType(TypeKind type1, TypeKind type2) {

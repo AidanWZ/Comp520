@@ -49,6 +49,7 @@ import miniJava.AbstractSyntaxTrees.Reference;
 import miniJava.AbstractSyntaxTrees.ReturnStmt;
 import miniJava.AbstractSyntaxTrees.Statement;
 import miniJava.AbstractSyntaxTrees.StatementList;
+import miniJava.AbstractSyntaxTrees.StringLiteral;
 import miniJava.AbstractSyntaxTrees.Terminal;
 import miniJava.AbstractSyntaxTrees.ThisRef;
 import miniJava.AbstractSyntaxTrees.TypeDenoter;
@@ -98,7 +99,7 @@ public class Parser {
 
 	void syntacticError(String messageTemplate, String tokenQuoted) throws SyntaxError {
 		SourcePosition pos = currentToken.position;
-		System.out.println("Syntactic Error: " + messageTemplate + " at token position " + pos.start);
+		System.out.println("Syntactic Error: " + messageTemplate + " with token " + tokenQuoted + " at token position " + pos.start);
 		errorReporter.reportError(messageTemplate, tokenQuoted, pos);	
 		throw(new SyntaxError());	
 	}
@@ -127,13 +128,13 @@ public class Parser {
 			while(currentToken.kind == Token.CLASS){
 				list.add(parseClassDeclaration());				
 			}			
-			if (currentToken.kind != Token.EOT) {				
+			if (currentToken.kind != Token.EOT) {								
 				syntacticError("Unexpected EOT", currentToken.spelling);
 			}			
 			return list;
 		}
-		catch (SyntaxError s) { 
-			syntacticError("Unexpected EOT", currentToken.spelling);
+		catch (SyntaxError s) {		 
+			syntacticError("Error occurred", currentToken.spelling);
 			return null; 
 		}
 	}
@@ -202,7 +203,7 @@ public class Parser {
 	public Identifier parseIdentifier() throws SyntaxError {
 		display("Running parseIdentifier");
 		Token temp;
-		if (currentToken.kind == Token.IDENTIFIER) {
+		if (currentToken.kind == Token.IDENTIFIER) {			
 			temp = new Token(Token.IDENTIFIER, currentToken.spelling, currentToken.position);
 			accept(Token.IDENTIFIER, "parseIdentifier");
 			previousTokenPosition = currentToken.position;
@@ -220,16 +221,16 @@ public class Parser {
 			previousTokenPosition = currentToken.position;
 			return new Identifier(temp);
 		}
-		else if (currentToken.kind == Token.STRING) {
+		else if (currentToken.kind == Token.STRING) {			
 			temp = new Token(Token.IDENTIFIER, currentToken.spelling, currentToken.position);
-			accept(Token.INT, "parseIdentifier");
+			accept(Token.STRING, "parseIdentifier");
 			previousTokenPosition = currentToken.position;
 			return new Identifier(temp);
 		}
 		else {
+			System.out.println(currentToken.kind == Token.STRING);
 			syntacticError("Unexpected Token in parseIdentifier", currentToken.spelling); 
 		}
-		syntacticError("Unexpected Token in parseIdentifier", currentToken.spelling);
 		return null;
 	}
 
@@ -343,6 +344,20 @@ public class Parser {
 			return new IntLiteral(currentToken);
 		} else {
 			syntacticError("Unexpected Token in parseNum", currentToken.spelling);
+			return null;
+		}
+	}
+
+	public StringLiteral parseString() throws SyntaxError {
+		display("Running parseString");
+		if (currentToken.spelling.charAt(0) == '\"') {
+			previousTokenPosition = currentToken.position;
+			display(currentToken.spelling);
+			currentToken = Scanner.scan();
+			return new StringLiteral(currentToken);
+		}
+		else {
+			syntacticError("Unexpected Token in parseString", currentToken.spelling);
 			return null;
 		}
 	}
@@ -755,6 +770,10 @@ public class Parser {
 				current = currentToken;
 				parseNum();
 				return new LiteralExpr(new IntLiteral(current), current.position);
+			case Token.STRING:
+				current = currentToken;
+				parseString();
+				return new LiteralExpr(new StringLiteral(current), current.position);
 			case Token.OPERATOR:
 				current = currentToken;
 				if (Token.isUnop(currentToken.spelling)) {

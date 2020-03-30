@@ -1,9 +1,10 @@
 class Baz {
     public static Foo x;
-    public static System y;
+    public static void main(String[] args) {
+
+    }
     public void temp(int z) {
-        y.out.println(42);
-        x.poo = null;
+
     }
 }
 

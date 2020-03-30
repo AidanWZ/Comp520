@@ -82,8 +82,8 @@ public class Compiler {
         getDebugLevel(args);        
 		try {
             display("getting sourcefile...");
-            //source = new SourceFile(args[0]);
-            source = new SourceFile(System.getProperty("user.dir") + args[0]);
+            source = new SourceFile(args[0]);
+            //source = new SourceFile(System.getProperty("user.dir") + args[0]);
             //source.getContents();
             display("Initializing scanner...");
             scanner  = new Scanner(source);
