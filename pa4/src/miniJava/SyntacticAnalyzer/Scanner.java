@@ -131,6 +131,14 @@ public final class Scanner {
 			}
 			return Token.NUM;
 		}
+		if(currentChar == '\"') {			
+			takeIt();
+			while (currentChar != '\"') {
+				takeIt();
+			}
+			takeIt();
+			return Token.STRING;
+		}
 		
 		switch (currentChar) {
 			case ';':
