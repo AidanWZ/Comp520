@@ -1,0 +1,94 @@
+Test fail302: FAILED to be rejected.                           Points = 0
+Test fail304: was correctly rejected.                          Points = 1
+Test fail306: was correctly rejected.                          Points = 1
+Test fail307: FAILED to be rejected.                           Points = 0
+Test fail308: FAILED to be rejected.                           Points = 0
+Test fail309: was correctly rejected.                          Points = 1
+Test fail310: your compiler failed while processing the test input!
+Test fail311: FAILED to be rejected.                           Points = 0
+Test fail312: your compiler failed while processing the test input!
+Test fail313: your compiler failed while processing the test input!
+Test fail320: FAILED to be rejected.                           Points = 0
+Test fail321: FAILED to be rejected.                           Points = 0
+Test fail322: your compiler failed while processing the test input!
+Test fail323: your compiler failed while processing the test input!
+Test fail324: was correctly rejected.                          Points = 1
+Test fail325: was correctly rejected.                          Points = 1
+Test fail327: your compiler failed while processing the test input!
+Test fail328: your compiler failed while processing the test input!
+Test fail329: was correctly rejected.                          Points = 1
+Test fail330: your compiler failed while processing the test input!
+Test fail331: FAILED to be rejected.                           Points = 0
+Test fail332: was correctly rejected.                          Points = 1
+Test fail333: FAILED to be rejected.                           Points = 0
+Test fail334: FAILED to be rejected.                           Points = 0
+Test fail335: FAILED to be rejected.                           Points = 0
+Test fail336: was correctly rejected.                          Points = 1
+Test fail337: FAILED to be rejected.                           Points = 0
+Test fail340: was correctly rejected.                          Points = 1
+Test fail342: was correctly rejected.                          Points = 1
+Test fail348: was correctly rejected.                          Points = 1
+Test fail349: FAILED to be rejected.                           Points = 0
+Test fail350: your compiler failed while processing the test input!
+Test fail351: was correctly rejected.                          Points = 1
+Test fail352: was correctly rejected.                          Points = 1
+Test fail354: was correctly rejected.                          Points = 1
+Test fail355: your compiler failed while processing the test input!
+Test fail390: was correctly rejected.                          Points = 1
+Test fail391: was correctly rejected.                          Points = 1
+Test fail392: FAILED to be rejected.                           Points = 0
+Test fail393: was correctly rejected.                          Points = 1
+Test fail394: was correctly rejected.                          Points = 1
+Test fail395: your compiler failed while processing the test input!
+Test fail396: FAILED to be rejected.                           Points = 0
+Test fail397: was correctly rejected.                          Points = 1
+Test pass301: was correctly accepted.                          Points = 1
+Test pass302: was correctly accepted.                          Points = 1
+Test pass303: was correctly accepted.                          Points = 1
+Test pass304: your compiler failed while processing the test input!
+Test pass305: was correctly accepted.                          Points = 1
+Test pass306: was correctly accepted.                          Points = 1
+Test pass307: was correctly accepted.                          Points = 1
+Test pass308: was correctly accepted.                          Points = 1
+Test pass309: FAILED to be accepted.                           Points = 0
+Test pass310: your compiler failed while processing the test input!
+Test pass311: your compiler failed while processing the test input!
+Test pass312: your compiler failed while processing the test input!
+Test pass321: your compiler failed while processing the test input!
+Test pass322: your compiler failed while processing the test input!
+Test pass323: was correctly accepted.                          Points = 1
+Test pass324: your compiler failed while processing the test input!
+Test pass325: your compiler failed while processing the test input!
+Test pass327: FAILED to be accepted.                           Points = 0
+Test pass328: your compiler failed while processing the test input!
+Test pass330: your compiler failed while processing the test input!
+Test pass331: your compiler failed while processing the test input!
+Test pass332: your compiler failed while processing the test input!
+Test pass337: FAILED to be accepted.                           Points = 0
+Test pass343: your compiler failed while processing the test input!
+Test pass347: your compiler failed while processing the test input!
+Test pass349: your compiler failed while processing the test input!
+Test pass351: your compiler failed while processing the test input!
+Test pass354: your compiler failed while processing the test input!
+Test pass355: your compiler failed while processing the test input!
+Test pass359: your compiler failed while processing the test input!
+Test pass362: your compiler failed while processing the test input!
+Test pass363: your compiler failed while processing the test input!
+Test pass364: your compiler failed while processing the test input!
+Test pass365: your compiler failed while processing the test input!
+Test pass366: your compiler failed while processing the test input!
+Test pass367: your compiler failed while processing the test input!
+Test pass372: your compiler failed while processing the test input!
+Test pass373: your compiler failed while processing the test input!
+Test pass374: your compiler failed while processing the test input!
+Test pass375: your compiler failed while processing the test input!
+Test pass376: your compiler failed while processing the test input!
+Test pass377: your compiler failed while processing the test input!
+Test pass378: your compiler failed while processing the test input!
+Test pass379: your compiler failed while processing the test input!
+Test pass380: your compiler failed while processing the test input!
+Test pass381: your compiler failed while processing the test input!
+Test pass382: your compiler failed while processing the test input!
+Test pass383: your compiler failed while processing the test input!
+Test pass390: your compiler failed while processing the test input!
+Test pass392: FAILED to be accepted.                           Points = 0

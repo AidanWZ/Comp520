@@ -1,37 +1,29 @@
+package tester;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.FileInputStream;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
-/* Automated regression tester for Checkpoint 2 tests
+/* Automated regression tester for Checkpoint 3 tests. 
  * Created by Max Beckman-Harned and Jan Prins
- * Put your tests in "tests/pa2_tests" folder in your Eclipse workspace directory
- * If you preface your error messages / exceptions with ERROR or *** they will be 
- * displayed if they appear during processing
+ * Put your tests in "tests/pa3_tests" folder in your Eclipse workspace directory
+ * If you preface your error messages / exceptions with *** then they will 
+ * be displayed in the regression tester output when they appear during processing
  */
 
-public class Checkpoint {
-	
-	private static class ReturnInfo {
-		int returnCode;
-		String ast;
-		public ReturnInfo(int _returnCode, String _ast) {
-			returnCode = _returnCode;
-			ast = _ast;
-		}
-	}
-	
+public class Checkpoint3 {
+        
 	private static String projDir;
 	private static File classPath;
 	private static File testDir;
-	
-	public static void main(String[] args) throws IOException, InterruptedException {
-		
+        
+    public static void main(String[] args) throws IOException, InterruptedException {
+
 		// project directory for miniJava and tester
 		projDir = System.getProperty("user.dir");
-		System.out.println("Run pa2_tests on miniJava compiler in " + projDir);
+		System.out.println("Run pa3_tests on miniJava compiler in " + projDir);
 		
 		// compensate for project organization 
 		classPath = new File(projDir + "/bin");
@@ -39,32 +31,29 @@ public class Checkpoint {
 			// no bin directory in project, assume projDir is root for class files
 			classPath = new File(projDir);
 		}
-		System.out.println(projDir);
-		System.out.println(classPath);
+
 		// miniJava compiler mainclass present ?
 		if (! new File(classPath + "/miniJava/Compiler.class").exists()) {
-			System.out.println("No miniJava Compiler.class found in " + classPath + "/miniJava/Compiler.class - exiting");
+			System.out.println("No miniJava Compiler.class found (has it been compiled?) - exiting");
 			return;
 		}
-		
+
 		// test directory present ?
-		testDir = (new File(projDir + "/test/pa2_tests").getCanonicalFile());
+		testDir = (new File(projDir + "/../tests/pa3_tests").getCanonicalFile());
 		if (! testDir.isDirectory()) {
-			System.out.println("pa2_tests directory not found in " + projDir + "/test/pa2_tests- exiting!");
+			System.out.println("pa3_tests directory not found - exiting!");
 			return;
 		}
 
 		System.out.println("Running tests from directory " + testDir);
-
-		int failures = 0;
-		for (File x : testDir.listFiles()) {
-			if (x.getName().endsWith("out") || x.getName().startsWith("."))
-				continue;
-			ReturnInfo info = runTest(x); 
-			String ast = info.ast;
-			int returnCode = info.returnCode;
-			if (returnCode == 1) {
-				System.err.println("### miniJava Compiler failed while processing test " + x.getName());
+        int failures = 0;
+        for (File x : testDir.listFiles()) {
+            if (x.getName().endsWith("out") || x.getName().startsWith(".") 
+                || x.getName().endsWith("mJAM") || x.getName().endsWith("asm"))
+                   continue;
+            int returnCode = runTest(x); 
+            if (returnCode == 1) {
+				System.err.println("### miniJava Compiler fails while processing test " + x.getName());
 				failures++;
 				continue;
 			}
@@ -73,76 +62,54 @@ public class Checkpoint {
 				failures++;
 				continue;
 			}
-			if (x.getName().indexOf("pass") != -1) {
-				if (returnCode == 0) {
-					String actualAST = getAST(new FileInputStream(x.getPath() + ".out"));
-					if (actualAST.equals(ast))
-						System.out.println(x.getName() + " parsed successfully and has a correct AST!");
-					else {
-						System.err.println(x.getName() + " parsed successfully but has an incorrect AST!");
-						failures++;
-					}
-				}
-				else {
-					failures++;
-					System.err.println(x.getName()
-							+ " failed to be parsed!");
-				}
-			} else {
-				if (returnCode == 4)
-					System.out.println(x.getName() + " failed successfully!");
-				else {
-					System.err.println(x.getName() + " did not fail properly!");
-					failures++;
-				}
-			}
-		}
-		System.out.println(failures + " failures in all.");	
-	}
-	
-	private static ReturnInfo runTest(File x) throws IOException, InterruptedException {
+            if (x.getName().indexOf("pass") != -1) {
+                if (returnCode == 0) {
+                    System.out.println(x.getName() + " passed successfully!");
+                }
+                else {
+                    failures++;
+                    System.err.println(x.getName()  + " did not pass!");
+                }
+            } else {
+                if (returnCode == 4)
+                    System.out.println(x.getName() + " failed successfully!");
+                else {
+                    System.err.println(x.getName() + " failed to detect the error!");
+                    failures++;
+                }
+            }
+        }
+        System.out.println(failures + " incorrect results in all.");     
+    }
+        
+    private static int runTest(File x) throws IOException, InterruptedException {
 
-		String testPath = x.getPath();
-		ProcessBuilder pb = new ProcessBuilder("java", "miniJava.Compiler", testPath);
-		pb.directory(classPath);
-		pb.redirectErrorStream(true);
-		Process p = pb.start();
+        String testPath = x.getPath();
+        ProcessBuilder pb = new ProcessBuilder("java", "miniJava.Compiler", testPath);
+        pb.directory(classPath);
+        pb.redirectErrorStream(true);
+        Process p = pb.start();
 
-		String ast = getAST(p.getInputStream());
-		int exitValue;
-		if (!p.waitFor(4, TimeUnit.SECONDS)) {
+        processStream(p.getInputStream());
+        if (!p.waitFor(5, TimeUnit.SECONDS)) {
 			// hung test
 			p.destroy();
-			exitValue = 130;  // interrupted
+			return 130;  // interrupted
 		}
-		else {
-			exitValue = p.exitValue();
-		}
-		return new ReturnInfo(exitValue, ast);
-	}
-	
-	
-	public static String getAST(InputStream stream) {
-		Scanner scan = new Scanner(stream);
-		String ast = null; 
-		while (scan.hasNextLine()) {
-			String line = scan.nextLine();
-			if (line.equals("======= AST Display =========================")) {
-				line = scan.nextLine();
-				while(scan.hasNext() && !line.equals("=============================================")) {
-					ast += line + "\n";
-					line = scan.nextLine();
-				}
-			}
-			if (line.startsWith("*** "))
-				System.out.println(line);
-			if (line.startsWith("ERROR")) {
-				System.out.println(line);
-				while(scan.hasNext())
-					System.out.println(scan.next());
-			}
-		}
-		scan.close();
-		return ast;
-	}
+        return p.exitValue();
+    }
+        
+        
+    public static void processStream(InputStream stream) {
+        Scanner scan = new Scanner(stream);
+        while (scan.hasNextLine()) {
+            String line = scan.nextLine();
+            if (line.startsWith("*** "))
+                System.out.println(line);
+            if (line.startsWith("ERROR")) {
+                System.out.println(line);
+            }
+        }
+        scan.close();
+    }
 }
