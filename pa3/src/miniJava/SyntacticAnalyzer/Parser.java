@@ -298,7 +298,7 @@ public class Parser {
 				acceptIt();
 				if(currentToken.kind == Token.LBRACKET){
 					acceptIt();
-					accept(Token.RBRACKET, "parseType");	
+					accept(Token.RBRACKET, "parseType");
 					return new ArrayType(new BaseType(TypeKind.INT, current.position), current.position);
 				}
 				else {
@@ -440,20 +440,18 @@ public class Parser {
 					acceptIt();
 					if(currentToken.kind == Token.RBRACKET){
 						acceptIt();
-						Reference name = null;
-						if (currentToken.kind == Token.IDENTIFIER) {
-							name = parseReference();
-						}				
+						//Reference name =  parseReference();
+						Identifier name = parseIdentifier();								
 						Expression arrayExpr;		
 						if (currentToken.kind == Token.EQUALS) {
 							accept(Token.EQUALS, "parseStatement");
 							arrayExpr = parseExpression();
 							accept(Token.SEMICOLON, "parseStatement");
-							return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.CLASS, currentToken.position), current.spelling, current.position), arrayExpr, current.position);
+							return new VarDeclStmt(new VarDecl(new ArrayType(new ClassType(new Identifier(new Token(0, ((IdRef)id).id.spelling, current.position)), current.position), current.position), name.spelling, current.position), arrayExpr, current.position);
 						}
 						else if (currentToken.kind == Token.SEMICOLON) {
 							accept(Token.SEMICOLON, "parseStatement");
-							return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.CLASS, currentToken.position), current.spelling, current.position), null, current.position);
+							return new VarDeclStmt(new VarDecl(new ArrayType(new ClassType(new Identifier(new Token(0, ((IdRef)id).id.spelling, current.position)), current.position), current.position), name.spelling, current.position), null, current.position);
 						}				
 					}
 					else {
@@ -531,16 +529,18 @@ public class Parser {
 					return new AssignStmt(id, assign, current.position);
 				}
 				else if(currentToken.kind == Token.IDENTIFIER){
-					Reference ref = parseReference();
+					//Token varName = currentToken;
+					//Reference ref = parseReference();
+					Identifier idName = parseIdentifier();
 					if (currentToken.kind == Token.EQUALS) {
 						accept(Token.EQUALS, "parseStatement");
 						Expression classExpr = parseExpression();
 						accept(Token.SEMICOLON, "parseStatement");
-						return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.CLASS, currentToken.position), current.spelling, current.position), classExpr, current.position);
+						return new VarDeclStmt(new VarDecl(new ClassType(new Identifier(new Token(0, ((IdRef)id).id.spelling, idName.posn)), currentToken.position), idName.spelling, current.position), classExpr, current.position);
 					}
 					else {
 						accept(Token.SEMICOLON, "parseStatement");
-						return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.CLASS, currentToken.position), current.spelling, current.position), null, current.position);
+						return new VarDeclStmt(new VarDecl(new ClassType(new Identifier(new Token(0, ((IdRef)id).id.spelling, idName.posn)), currentToken.position), idName.spelling, current.position), null, current.position);
 					}
 				}
 				break;
@@ -624,7 +624,7 @@ public class Parser {
 				}						
 			case Token.BOOLEAN:
 				current = currentToken; 
-				parseType();
+				TypeDenoter booleanType = parseType();
 				Expression i_boolean = null;
 				Expression e_boolean = null;
 				Identifier id_boolean = null;				
@@ -633,18 +633,18 @@ public class Parser {
 					accept(Token.EQUALS, "parseStatement");
 					e_boolean = parseExpression();
 					accept(Token.SEMICOLON, "parseStatement");
-					return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.BOOLEAN, current.position), id_boolean.spelling, current.position), e_boolean, current.position);
+					return new VarDeclStmt(new VarDecl(booleanType, id_boolean.spelling, current.position), e_boolean, current.position);
 				}		
 				else if (currentToken.kind == Token.SEMICOLON) {
 					accept(Token.SEMICOLON, "parseStatement");
-					return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.BOOLEAN, current.position), id_boolean.spelling, current.position), null, current.position);
+					return new VarDeclStmt(new VarDecl(booleanType, id_boolean.spelling, current.position), null, current.position);
 				}		
 				else {
 					return null;
 				}				
 			case Token.INT: 
 				current = currentToken;				
-				parseType();
+				TypeDenoter intType = parseType();
 				Expression i_int = null;
 				Expression e_int = null;
 				Identifier id_int = null;				
@@ -653,11 +653,11 @@ public class Parser {
 					accept(Token.EQUALS, "parseStatement");
 					e_int = parseExpression();
 					accept(Token.SEMICOLON, "parseStatement");
-					return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.INT, current.position), id_int.spelling, current.position), e_int, current.position);
+					return new VarDeclStmt(new VarDecl(intType, id_int.spelling, current.position), e_int, current.position);
 				}		
 				else if (currentToken.kind == Token.SEMICOLON) {
 					accept(Token.SEMICOLON, "parseStatement");
-					return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.INT, current.position), id_int.spelling, current.position), null, current.position);
+					return new VarDeclStmt(new VarDecl(intType, id_int.spelling, current.position), null, current.position);
 				}		
 				else {
 					return null;
@@ -673,11 +673,11 @@ public class Parser {
 					accept(Token.EQUALS, "parseStatement");
 					e_int = parseExpression();
 					accept(Token.SEMICOLON, "parseStatement");
-					return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.INT, current.position), id_int.spelling, current.position), e_int, current.position);
+					return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.STRING, current.position), id_int.spelling, current.position), e_int, current.position);
 				}		
 				else if (currentToken.kind == Token.SEMICOLON) {
 					accept(Token.SEMICOLON, "parseStatement");
-					return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.INT, current.position), id_int.spelling, current.position), null, current.position);
+					return new VarDeclStmt(new VarDecl(new BaseType(TypeKind.STRING, current.position), id_int.spelling, current.position), null, current.position);
 				}		
 				else {
 					return null;

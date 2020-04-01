@@ -1,5 +1,3 @@
-package tester;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,7 +11,7 @@ import java.util.concurrent.TimeUnit;
  * be displayed in the regression tester output when they appear during processing
  */
 
-public class Checkpoint3 {
+public class Checkpoint {
         
 	private static String projDir;
 	private static File classPath;
