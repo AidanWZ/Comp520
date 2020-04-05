@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.Visitor;
@@ -26,7 +27,11 @@ public class IxAssignStmt extends Statement
 
     public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
         v.visitIxAssignStmt(this);
-      }
+    }
+
+    public void generate(Generator generator) {
+        generator.visitIxAssignStmt(this);
+    }
     
     public Reference ref;
     public Expression ix;

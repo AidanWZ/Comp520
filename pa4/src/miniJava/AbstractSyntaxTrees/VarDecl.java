@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.TypeError;
@@ -24,4 +25,7 @@ public class VarDecl extends LocalDecl {
 	public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError{
 		v.visitVarDecl(this);
 	  }
+
+	public void generate(Generator generator) {
+	}
 }

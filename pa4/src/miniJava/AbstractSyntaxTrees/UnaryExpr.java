@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.TypeError;
@@ -25,6 +26,10 @@ public class UnaryExpr extends Expression
 
     public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError{
         v.visitUnaryExpr(this);
+    }
+
+    public void generate(Generator generator) {
+        generator.visitUnaryExpr(this);
     }
 
     public Operator operator;

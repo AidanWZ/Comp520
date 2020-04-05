@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.TypeError;
@@ -19,13 +20,16 @@ public class QualRef extends Reference {
 		this.id  = id;
 	}
 
-	@Override
 	public <A, R> R visit(Visitor<A, R> v, A o) {
 		return v.visitQRef(this, o);
 	}
 
 	public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
         v.visitQRef(this);
+	}
+	
+	public void generate(Generator generator) {
+        generator.visitQRef(this);
     }
 
 	public Reference ref;

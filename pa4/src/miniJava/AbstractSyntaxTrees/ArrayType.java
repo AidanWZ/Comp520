@@ -6,6 +6,7 @@
 
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.TypeError;
@@ -26,6 +27,10 @@ public class ArrayType extends TypeDenoter {
 		
 		public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
 			v.visitArrayType(this);
+		}
+
+		public void generate(Generator generator) {
+			generator.visitArrayType(this);
 		}
 
 		public TypeDenoter eltType;

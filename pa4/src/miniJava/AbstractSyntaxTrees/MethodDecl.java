@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.TypeError;
@@ -29,4 +30,6 @@ public class MethodDecl extends MemberDecl {
 	
 	public ParameterDeclList parameterDeclList;
 	public StatementList statementList;
+	public void generate(Generator generator) {
+	}
 }

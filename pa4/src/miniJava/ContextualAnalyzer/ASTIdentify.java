@@ -85,6 +85,7 @@ public class ASTIdentify implements Traveller<String> {
     public Stack<HashMap<String, Declaration>> scopeIdentificationTable;
     public ArrayList<Stack<HashMap<String, Declaration>>> allMembers;
     public AST ast;
+    public ASTDisplay astDisplay;
     public int iteratorIndex;
     public ErrorReporter idReporter;
     public ErrorReporter typeReporter;
@@ -101,6 +102,7 @@ public class ASTIdentify implements Traveller<String> {
     public ASTIdentify(ErrorReporter idReporter, ErrorReporter typeReporter, AST ast) throws IdentificationError {
         this.scopeIdentificationTable = new Stack<HashMap<String, Declaration>>();
         this.ast = ast;
+        this.astDisplay = new ASTDisplay();
         this.allMembers = new ArrayList<Stack<HashMap<String, Declaration>>>();
         this.idReporter = idReporter;
         this.typeReporter = typeReporter;
@@ -123,6 +125,7 @@ public class ASTIdentify implements Traveller<String> {
                         new SourcePosition(0, 0)),
                 "out", new SourcePosition(0, 0)));
         temp.put("System", new ClassDecl("System", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
+        ((Package)ast).classDeclList.add(new ClassDecl("System", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
 
         // adding _PrintStream class
         tempFieldsList = new FieldDeclList();
@@ -136,17 +139,19 @@ public class ASTIdentify implements Traveller<String> {
                         tempParameterList, new StatementList(), new SourcePosition(0, 0)));
         temp.put("_PrintStream",
                 new ClassDecl("_PrintStream", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
+        ((Package)ast).classDeclList.add(new ClassDecl("_PrintStream", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
 
         // adding String class
         tempFieldsList = new FieldDeclList();
         tempMethodsList = new MethodDeclList();
         tempParameterList = new ParameterDeclList();
         temp.put("String", new ClassDecl("String", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
+        ((Package)ast).classDeclList.add(new ClassDecl("String", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
 
         // creating top level scope
         addScope();
         scopeIdentificationTable.set(0, temp);        
-        //loading file classes and members
+        //loading file classes and members + default classes
         loadClassMembers();
         //displayAllMembers();
         checkForMain();
@@ -176,69 +181,69 @@ public class ASTIdentify implements Traveller<String> {
             index++;
         } 
 
-        HashMap<String, Declaration> classItems;
-        HashMap<String, Declaration> memberItems;
-        FieldDeclList tempFieldsList;
-        MethodDeclList tempMethodsList;
-        ParameterDeclList tempParameterList;
+        // HashMap<String, Declaration> classItems;
+        // HashMap<String, Declaration> memberItems;
+        // FieldDeclList tempFieldsList;
+        // MethodDeclList tempMethodsList;
+        // ParameterDeclList tempParameterList;
 
-        //addng System class 
-        classItems = new HashMap<String, Declaration>();
-        memberItems = new HashMap<String, Declaration>();  
-        tempFieldsList = new FieldDeclList();
-        tempMethodsList = new MethodDeclList();
-        tempParameterList = new ParameterDeclList();
-        tempFieldsList.add(new FieldDecl(false, true,
-                new ClassType(new Identifier(new Token(0, "_PrintStream", new SourcePosition(0, 0))),
-                        new SourcePosition(0, 0)),
-                "out", new SourcePosition(0, 0)));
-        classItems.put("System", new ClassDecl("System", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
-        memberItems.put("out", new FieldDecl(false, true,
-                new ClassType(new Identifier(new Token(0, "_PrintStream", new SourcePosition(0, 0))),
-                        new SourcePosition(0, 0)),
-                "out", new SourcePosition(0, 0)));
-        allMembers.add(new Stack<HashMap<String, Declaration>>());
-        allMembers.get(index).push(new HashMap<String, Declaration>());
-        allMembers.get(index).set(0, classItems);
-        allMembers.get(index).push(new HashMap<String, Declaration>());  
-        allMembers.get(index).set(1, memberItems);
-        index++;
+        // //addng System class 
+        // classItems = new HashMap<String, Declaration>();
+        // memberItems = new HashMap<String, Declaration>();  
+        // tempFieldsList = new FieldDeclList();
+        // tempMethodsList = new MethodDeclList();
+        // tempParameterList = new ParameterDeclList();
+        // tempFieldsList.add(new FieldDecl(false, true,
+        //         new ClassType(new Identifier(new Token(0, "_PrintStream", new SourcePosition(0, 0))),
+        //                 new SourcePosition(0, 0)),
+        //         "out", new SourcePosition(0, 0)));
+        // classItems.put("System", new ClassDecl("System", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
+        // memberItems.put("out", new FieldDecl(false, true,
+        //         new ClassType(new Identifier(new Token(0, "_PrintStream", new SourcePosition(0, 0))),
+        //                 new SourcePosition(0, 0)),
+        //         "out", new SourcePosition(0, 0)));
+        // allMembers.add(new Stack<HashMap<String, Declaration>>());
+        // allMembers.get(index).push(new HashMap<String, Declaration>());
+        // allMembers.get(index).set(0, classItems);
+        // allMembers.get(index).push(new HashMap<String, Declaration>());  
+        // allMembers.get(index).set(1, memberItems);
+        // index++;
 
-        //adding _PrintStream class
-        classItems = new HashMap<String, Declaration>();
-        memberItems = new HashMap<String, Declaration>(); 
-        tempFieldsList = new FieldDeclList();
-        tempMethodsList = new MethodDeclList();
-        tempParameterList = new ParameterDeclList();
-        tempParameterList.add(
-                new ParameterDecl(new BaseType(TypeKind.INT, new SourcePosition(0, 0)), "n", new SourcePosition(0, 0)));
-        tempMethodsList.add(new MethodDecl(
-                new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println",
-                        new SourcePosition(0, 0)),
-                new ParameterDeclList(), new StatementList(), new SourcePosition(0, 0)));
-        classItems.put("_PrintStream",
-                new ClassDecl("_PrintStream", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
-        memberItems.put("println", new MethodDecl(
-                new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println",
-                        new SourcePosition(0, 0)),
-                        tempParameterList, new StatementList(), new SourcePosition(0, 0)));
-        allMembers.add(new Stack<HashMap<String, Declaration>>());
-        allMembers.get(index).push(new HashMap<String, Declaration>());
-        allMembers.get(index).set(0, classItems);
-        allMembers.get(index).push(new HashMap<String, Declaration>());  
-        allMembers.get(index).set(1, memberItems);
-        index++;
+        // //adding _PrintStream class
+        // classItems = new HashMap<String, Declaration>();
+        // memberItems = new HashMap<String, Declaration>(); 
+        // tempFieldsList = new FieldDeclList();
+        // tempMethodsList = new MethodDeclList();
+        // tempParameterList = new ParameterDeclList();
+        // tempParameterList.add(
+        //         new ParameterDecl(new BaseType(TypeKind.INT, new SourcePosition(0, 0)), "n", new SourcePosition(0, 0)));
+        // tempMethodsList.add(new MethodDecl(
+        //         new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println",
+        //                 new SourcePosition(0, 0)),
+        //         new ParameterDeclList(), new StatementList(), new SourcePosition(0, 0)));
+        // classItems.put("_PrintStream",
+        //         new ClassDecl("_PrintStream", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
+        // memberItems.put("println", new MethodDecl(
+        //         new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println",
+        //                 new SourcePosition(0, 0)),
+        //                 tempParameterList, new StatementList(), new SourcePosition(0, 0)));
+        // allMembers.add(new Stack<HashMap<String, Declaration>>());
+        // allMembers.get(index).push(new HashMap<String, Declaration>());
+        // allMembers.get(index).set(0, classItems);
+        // allMembers.get(index).push(new HashMap<String, Declaration>());  
+        // allMembers.get(index).set(1, memberItems);
+        // index++;
 
-        //adding String class
-        classItems = new HashMap<String, Declaration>();
-        memberItems = new HashMap<String, Declaration>(); 
-        tempFieldsList = new FieldDeclList();
-        tempMethodsList = new MethodDeclList();
-        tempParameterList = new ParameterDeclList();
-        classItems.put("String", new ClassDecl("String", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
-        allMembers.add(new Stack<HashMap<String, Declaration>>());
-        allMembers.get(index).push(new HashMap<String, Declaration>());
-        allMembers.get(index).set(0, classItems);
+        // //adding String class
+        // classItems = new HashMap<String, Declaration>();
+        // memberItems = new HashMap<String, Declaration>(); 
+        // tempFieldsList = new FieldDeclList();
+        // tempMethodsList = new MethodDeclList();
+        // tempParameterList = new ParameterDeclList();
+        // classItems.put("String", new ClassDecl("String", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
+        // allMembers.add(new Stack<HashMap<String, Declaration>>());
+        // allMembers.get(index).push(new HashMap<String, Declaration>());
+        // allMembers.get(index).set(0, classItems);
     }
 
     public void checkForMain() throws IdentificationError {
@@ -263,8 +268,7 @@ public class ASTIdentify implements Traveller<String> {
                 return true;
             }
         }
-        return false;
-        
+        return false;        
     }
 
     public boolean isSameTypeKind(TypeKind type1, TypeKind type2) {
@@ -293,6 +297,10 @@ public class ASTIdentify implements Traveller<String> {
 
     public boolean isSameExprType(Expression expr1, Expression expr2) {
         return expr1.getClass().equals(expr2.getClass());
+    }
+
+    public void displayAST() {
+        astDisplay.showTree(this.ast);
     }
 
     public void displayIdTable() {        
@@ -485,7 +493,7 @@ public class ASTIdentify implements Traveller<String> {
 
     public String visitPackage(Package prog) throws TypeError, IdentificationError {
         for (ClassDecl c: prog.classDeclList) {  
-            if (classNames.contains(c.name)) {
+            if (classNames.contains(c.name)) {                
                 identificationError(c.posn.start, "visitPackage", "duplicate class declaration " + c.name);
             }       
             className = c.name;
@@ -645,7 +653,7 @@ public class ASTIdentify implements Traveller<String> {
             if (isSameTypeKind(stmt.initExp.type, TypeKind.CLASS)) {                
                 // if the init expression is new
                 if (stmt.initExp.getClass().equals(new NewObjectExpr(null, null).getClass())) {                    
-                    //cannot assign class type to primitive type                                    
+                    //cannot assign class type to primitive type  
                     if (!isSameTypeKind((((VarDecl)stmt.varDecl).type).typeKind, TypeKind.CLASS)) {                       
                         typeError(stmt.posn.start, "visitVarDeclStmt", "declaration (" + (((VarDecl)stmt.varDecl).type).typeKind + ") and assignment (" + TypeKind.CLASS +  ") types dont match");
                     }

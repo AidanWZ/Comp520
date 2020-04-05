@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.Visitor;
@@ -26,7 +27,12 @@ public class ClassDecl extends Declaration {
   public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
     v.visitClassDecl(this);
   }
+
+  public void generate(Generator generator) {
+    generator.visitClassDecl(this);
+  }
       
   public FieldDeclList fieldDeclList;
   public MethodDeclList methodDeclList;
+
 }

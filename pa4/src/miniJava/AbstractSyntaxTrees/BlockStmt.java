@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.Visitor;
@@ -24,6 +25,10 @@ public class BlockStmt extends Statement
 
     public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
         v.visitBlockStmt(this);
+    }
+
+    public void generate(Generator generator) {
+        generator.visitBlockStmt(this);
     }
    
     public StatementList sl;

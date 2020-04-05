@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.TypeError;
@@ -24,7 +25,11 @@ public class ReturnStmt extends Statement
 
 	public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
 		v.visitReturnStmt(this);
-	  }
+	}
+
+	public void generate(Generator generator) {
+        generator.visitReturnStmt(this);
+    }
 
 	public Expression returnExpr;
 }	

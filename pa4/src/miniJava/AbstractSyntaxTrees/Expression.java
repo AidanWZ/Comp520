@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import  miniJava.SyntacticAnalyzer.SourcePosition;
 
 public abstract class Expression extends AST {
@@ -14,5 +15,8 @@ public abstract class Expression extends AST {
   }
 
   public TypeKind type;
+
+public void generate(Generator generator) {
+}
   
 }

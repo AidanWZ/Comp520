@@ -1,25 +1,14 @@
-/**
- * COMP 520
- * Identification
- */
-class Pass303 {
-
-    // public static void main(String[] args) {}
-
-    public int g(int input, int tester) {
-        return input + 3;
+class Counter {
+    
+    public void increase(int k) {
+        count = count + k;
     }
-    private int here;
-    public C coors;  // hides class C at member level
-    public void change(int derp) {
-        System.out.println(5);
+    public static void main(String [] args){
+        Counter counter = new Counter();
+        counter.increase(3);
+        System.out.println(counter.count);
     }
-
-}
-
-class C {
-    public int extra(int param) {
-        return 3;
-    }
-    public static int holder;
+    
+    public int count;
+    
 }

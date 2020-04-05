@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.Visitor;
 import miniJava.SyntacticAnalyzer.SourcePosition;
@@ -37,4 +38,9 @@ public class Declarators extends Declaration {
         // TODO Auto-generated method stub
         return;
     }
+
+    public void generate(Generator generator) {
+        // TODO Auto-generated method stub
+        return;
+      }
 }

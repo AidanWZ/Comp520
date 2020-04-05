@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.TypeError;
@@ -24,4 +25,7 @@ public class Operator extends Terminal {
   public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
     v.visitOperator(this);
   }
+
+public void generate(Generator generator) {
+}
 }

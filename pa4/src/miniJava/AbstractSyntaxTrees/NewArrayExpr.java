@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.Visitor;
@@ -25,6 +26,10 @@ public class NewArrayExpr extends NewExpr
 
     public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
         v.visitNewArrayExpr(this);
+    }
+
+    public void generate(Generator generator) {
+        generator.visitNewArrayExpr(this);
     }
 
     public TypeDenoter eltType;
