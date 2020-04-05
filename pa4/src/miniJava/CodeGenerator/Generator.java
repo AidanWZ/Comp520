@@ -5,7 +5,6 @@
  */
 package miniJava.CodeGenerator;
 
-import miniJava.AbstractSyntaxTrees.AST;
 import miniJava.AbstractSyntaxTrees.AssignStmt;
 import miniJava.AbstractSyntaxTrees.ArrayType;
 import miniJava.AbstractSyntaxTrees.BaseType;
@@ -15,7 +14,6 @@ import miniJava.AbstractSyntaxTrees.BooleanLiteral;
 import miniJava.AbstractSyntaxTrees.CallExpr;
 import miniJava.AbstractSyntaxTrees.CallStmt;
 import miniJava.AbstractSyntaxTrees.ClassDecl;
-import miniJava.AbstractSyntaxTrees.ClassDeclList;
 import miniJava.AbstractSyntaxTrees.ClassType;
 import miniJava.AbstractSyntaxTrees.Expression;
 import miniJava.AbstractSyntaxTrees.ExprList;
@@ -55,7 +53,6 @@ public class Generator implements ASTCodeGen<String,Object> {
 	public static boolean showPosition = false;
  
     public Object visitPackage(Package prog){
-        ClassDeclList cl = prog.classDeclList;
         for (ClassDecl c: prog.classDeclList){
             c.generate(this);
         }

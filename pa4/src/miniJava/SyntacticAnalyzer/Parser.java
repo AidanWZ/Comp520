@@ -1,13 +1,5 @@
 package miniJava.SyntacticAnalyzer;
 
-import miniJava.SyntacticAnalyzer.Token;
-import miniJava.SyntacticAnalyzer.SourcePosition;
-import miniJava.SyntacticAnalyzer.SyntaxError;
-import miniJava.SyntacticAnalyzer.Scanner;
-
-import javax.crypto.KeyAgreement;
-import javax.crypto.spec.RC2ParameterSpec;
-
 import miniJava.ErrorReporter;
 import miniJava.AbstractSyntaxTrees.AST;
 import miniJava.AbstractSyntaxTrees.ArrayType;
@@ -33,7 +25,6 @@ import miniJava.AbstractSyntaxTrees.IntLiteral;
 import miniJava.AbstractSyntaxTrees.IxAssignStmt;
 import miniJava.AbstractSyntaxTrees.IxExpr;
 import miniJava.AbstractSyntaxTrees.LiteralExpr;
-import miniJava.AbstractSyntaxTrees.MemberDecl;
 import miniJava.AbstractSyntaxTrees.MethodDecl;
 import miniJava.AbstractSyntaxTrees.MethodDeclList;
 import miniJava.AbstractSyntaxTrees.NewArrayExpr;
@@ -50,14 +41,12 @@ import miniJava.AbstractSyntaxTrees.ReturnStmt;
 import miniJava.AbstractSyntaxTrees.Statement;
 import miniJava.AbstractSyntaxTrees.StatementList;
 import miniJava.AbstractSyntaxTrees.StringLiteral;
-import miniJava.AbstractSyntaxTrees.Terminal;
 import miniJava.AbstractSyntaxTrees.ThisRef;
 import miniJava.AbstractSyntaxTrees.TypeDenoter;
 import miniJava.AbstractSyntaxTrees.TypeKind;
 import miniJava.AbstractSyntaxTrees.UnaryExpr;
 import miniJava.AbstractSyntaxTrees.VarDecl;
 import miniJava.AbstractSyntaxTrees.VarDeclStmt;
-import miniJava.ContextualAnalyzer.Visitor;
 import miniJava.AbstractSyntaxTrees.WhileStmt;
 
 public class Parser {
@@ -625,7 +614,6 @@ public class Parser {
 			case Token.BOOLEAN:
 				current = currentToken; 
 				TypeDenoter booleanType = parseType();
-				Expression i_boolean = null;
 				Expression e_boolean = null;
 				Identifier id_boolean = null;				
 				id_boolean = parseIdentifier();					
@@ -645,7 +633,6 @@ public class Parser {
 			case Token.INT: 
 				current = currentToken;				
 				TypeDenoter intType = parseType();
-				Expression i_int = null;
 				Expression e_int = null;
 				Identifier id_int = null;				
 				id_int = parseIdentifier();					
@@ -664,10 +651,7 @@ public class Parser {
 				}					
 			case Token.STRING: 
 				current = currentToken;				
-				parseType();
-				Expression i_String = null;
-				Expression e_String = null;
-				Identifier id_String = null;			
+				parseType();			
 				id_int = parseIdentifier();					
 				if (currentToken.kind == Token.EQUALS) {
 					accept(Token.EQUALS, "parseStatement");
@@ -816,7 +800,7 @@ public class Parser {
 						return new NewObjectExpr(new ClassType(id, current.position), current.position);
 					}
 					else {
-						ExprList argList = parseArgumentList();
+						parseArgumentList();
 						accept(Token.RPAREN, "parseExpandedExpression");					
 						return new NewObjectExpr(new ClassType(id, current.position), current.position);
 					}					
@@ -846,10 +830,9 @@ public class Parser {
 					return new IxExpr(ref, exprLocal, current.position);
 				}
 				else if (currentToken.kind == Token.PERIOD){	
-					Identifier idRef = null;
 					while(currentToken.kind == Token.PERIOD)  {
 						acceptIt();
-						idRef = parseIdentifier();
+						Identifier idRef = parseIdentifier();
 					}	
 					return new RefExpr(ref, current.position);				 					
 				}
@@ -879,10 +862,9 @@ public class Parser {
 					return new IxExpr(r, exprLocal, current.position);
 				}
 				else if (currentToken.kind == Token.PERIOD){	
-					Identifier idRef = null;
 					while(currentToken.kind == Token.PERIOD)  {
 						acceptIt();
-						idRef = parseIdentifier();
+						Identifier idRef = parseIdentifier();
 					}	
 					return new RefExpr(r, current.position);				 					
 				}				

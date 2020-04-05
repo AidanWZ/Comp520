@@ -1,7 +1,6 @@
 package miniJava;
 
 import miniJava.AbstractSyntaxTrees.AST;
-import miniJava.CodeGenerator.CodeGen;
 import miniJava.ContextualAnalyzer.ASTDisplay;
 import miniJava.ContextualAnalyzer.ASTIdentify;
 import miniJava.ContextualAnalyzer.IdentificationError;
@@ -24,8 +23,6 @@ public class Compiler {
     private static ASTDisplay display;
     private static AST ast;
     private static ASTIdentify identifier;
-    private static String contextualErrors;
-    private static CodeGen codeGenerator;
     
     public static void getDebugLevel(String[] args) {
         try {
@@ -99,12 +96,12 @@ public class Compiler {
             display("Starting Contextual analysis...");
             identifier = new ASTIdentify(idReporter, typeReporter, ast);
             displayAST();
-            contextualErrors = identifier.visit(ast);
+            identifier.visit(ast);
             display("Contextual analysis complete");
             display("Checking for Compilation errors");            
             checkErrors();
             display("No compilation errors found, compiling to " + args[0].replace(".java", ".mJAM"));
-            // CodeGen.generate(args[0], ast);
+            //CodeGen.generate(args[0], ast);
             display("Comilation complete");
             System.exit(0);
         } 
