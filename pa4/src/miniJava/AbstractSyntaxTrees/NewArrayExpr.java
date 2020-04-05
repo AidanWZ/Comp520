@@ -28,7 +28,7 @@ public class NewArrayExpr extends NewExpr
         v.visitNewArrayExpr(this);
     }
 
-    public void generate(Generator generator) {
+    public <R> void generate(Generator<R> generator) {
         generator.visitNewArrayExpr(this);
     }
 

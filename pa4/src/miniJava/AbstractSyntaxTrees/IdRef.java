@@ -27,7 +27,7 @@ public class IdRef extends BaseRef {
         v.visitIdRef(this);
 	}
 	
-	public void generate(Generator generator) {
+	public <R> void generate(Generator<R> generator) {
         generator.visitIdRef(this);
     }
 

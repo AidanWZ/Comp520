@@ -26,7 +26,7 @@ public class NewStringExpr extends NewExpr
         v.visitNewStringExpr(this);
     }
 
-    public void generate(Generator generator) {
+    public <R> void generate(Generator<R> generator) {
         generator.visitNewStringExpr(this);
     }
 

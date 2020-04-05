@@ -27,7 +27,7 @@ public class LiteralExpr extends Expression
         v.visitLiteralExpr(this);
     }
 
-    public void generate(Generator generator) {
+    public <R> void generate(Generator<R> generator) {
         generator.visitLiteralExpr(this);
     }
 

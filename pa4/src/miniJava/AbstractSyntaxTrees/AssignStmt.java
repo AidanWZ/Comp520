@@ -28,7 +28,7 @@ public class AssignStmt extends Statement
         v.visitAssignStmt(this);
     }
 
-    public void generate(Generator generator) {
+    public <R> void generate(Generator<R> generator) {
         generator.visitAssignStmt(this);
     }
     

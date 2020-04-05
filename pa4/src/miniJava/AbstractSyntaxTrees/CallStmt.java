@@ -28,7 +28,7 @@ public class CallStmt extends Statement
         v.visitCallStmt(this);
     }
 
-    public void generate(Generator generator) {
+    public <R> void generate(Generator<R> generator) {
         generator.visitCallStmt(this);
     }
     

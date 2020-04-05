@@ -26,7 +26,7 @@ public class BaseType extends TypeDenoter
         v.visitBaseType(this);
     }
 
-    public void generate(Generator generator) {
+    public <R> void generate(Generator<R> generator) {
         generator.visitBaseType(this);
     }
 }

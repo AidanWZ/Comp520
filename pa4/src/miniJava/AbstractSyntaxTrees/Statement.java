@@ -5,16 +5,11 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
-import miniJava.CodeGenerator.Generator;
-import  miniJava.SyntacticAnalyzer.SourcePosition;
+import miniJava.SyntacticAnalyzer.SourcePosition;
 
 public abstract class Statement extends AST {
 
   public Statement(SourcePosition posn) {
     super (posn);
   }
-
-public void generate(Generator generator) {
-}
-
 }

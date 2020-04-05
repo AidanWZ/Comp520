@@ -5,7 +5,6 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
-import miniJava.CodeGenerator.Generator;
 import miniJava.SyntacticAnalyzer.SourcePosition;
 
 abstract public class TypeDenoter extends AST {
@@ -15,11 +14,7 @@ abstract public class TypeDenoter extends AST {
         typeKind = type;
     }
     
-    public TypeKind typeKind;
-
-	public void generate(Generator generator) {
-	}
-    
+    public TypeKind typeKind;  
 }
 
         

@@ -26,7 +26,7 @@ public class BooleanLiteral extends Terminal {
     v.visitBooleanLiteral(this);
   }
 
-  public void generate(Generator generator) {
+  public <R> void generate(Generator<R> generator) {
     generator.visitBooleanLiteral(this);
   }
 }

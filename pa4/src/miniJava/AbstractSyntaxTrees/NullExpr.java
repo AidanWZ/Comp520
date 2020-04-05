@@ -26,7 +26,7 @@ public class NullExpr extends Expression {
         v.visitNullExpr(this);
 	}
 	
-	public void generate(Generator generator) {
+	public <R> void generate(Generator<R> generator) {
         generator.visitNullExpr(this);
     }
 }

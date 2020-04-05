@@ -29,7 +29,7 @@ public class BinaryExpr extends Expression
         v.visitBinaryExpr(this);
     }
 
-    public void generate(Generator generator) {
+    public <R> void generate(Generator<R> generator) {
         generator.visitBinaryExpr(this);
     }
     

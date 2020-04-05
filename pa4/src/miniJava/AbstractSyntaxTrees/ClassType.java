@@ -27,7 +27,7 @@ public class ClassType extends TypeDenoter
         v.visitClassType(this);
     }
 
-    public void generate(Generator generator) {
+    public <R> void generate(Generator<R> generator) {
         generator.visitClassType(this);
     }
 

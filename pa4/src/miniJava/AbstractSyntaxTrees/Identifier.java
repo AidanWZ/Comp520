@@ -14,24 +14,22 @@ import miniJava.SyntacticAnalyzer.Token;
 
 public class Identifier extends Terminal {
 
-    public Declaration decl;
+  public Declaration decl;
 
-    public Identifier (Token t) {
-      super (t);
-    }
+  public Identifier (Token t) {
+    super (t);
+  }
 
-    public <A,R> R visit(Visitor<A,R> v, A o) {
-      return v.visitIdentifier(this, o);
-    }
+  public <A,R> R visit(Visitor<A,R> v, A o) {
+    return v.visitIdentifier(this, o);
+  }
 
-    public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
-      v.visitIdentifier(this);
-    }
+  public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
+    v.visitIdentifier(this);
+  }
 
-	public void generate(Generator generator) {
-	}
+  public <R> void generate(Generator<R> generator) {
 
-    // public String toString() {
-    //   return decl.name;
-    // }
+  }
+  
 }

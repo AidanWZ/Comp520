@@ -28,7 +28,7 @@ public class ClassDecl extends Declaration {
     v.visitClassDecl(this);
   }
 
-  public void generate(Generator generator) {
+  public <R> void generate(Generator<R> generator) {
     generator.visitClassDecl(this);
   }
       

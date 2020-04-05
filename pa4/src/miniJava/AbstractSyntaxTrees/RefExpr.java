@@ -27,7 +27,7 @@ public class RefExpr extends Expression
         v.visitRefExpr(this);
     }
 
-    public void generate(Generator generator) {
+    public <R> void generate(Generator<R> generator) {
         generator.visitRefExpr(this);
     }
 

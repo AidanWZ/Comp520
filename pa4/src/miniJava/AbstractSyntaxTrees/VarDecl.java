@@ -26,6 +26,7 @@ public class VarDecl extends LocalDecl {
 		v.visitVarDecl(this);
 	  }
 
-	public void generate(Generator generator) {
+	public <R> void generate(Generator<R> generator) {
+		generator.visitVarDecl(this);
 	}
 }

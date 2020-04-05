@@ -28,7 +28,7 @@ public class IxExpr extends Expression {
         v.visitIxExpr(this);
     }
 
-    public void generate(Generator generator) {
+    public <R> void generate(Generator<R> generator) {
         generator.visitIxExpr(this);
     }
 

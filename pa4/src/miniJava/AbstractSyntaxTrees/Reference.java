@@ -5,7 +5,6 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
-import miniJava.CodeGenerator.Generator;
 import miniJava.SyntacticAnalyzer.SourcePosition;
 
 public abstract class Reference extends AST
@@ -15,8 +14,5 @@ public abstract class Reference extends AST
 	}
 
 	public Declaration decl;
-
-	public void generate(Generator generator) {
-	}
 	
 }

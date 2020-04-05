@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.ASTDisplay;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
@@ -29,6 +30,8 @@ public abstract class AST {
   public abstract <A,R> R visit(Visitor<A,R> v, A o);
 
   public abstract <R> void visit(Traveller<R> v) throws TypeError, IdentificationError;
+
+  public abstract <R> void generate(Generator<R> v);
 
   public SourcePosition posn;
 }

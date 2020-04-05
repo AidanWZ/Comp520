@@ -5,7 +5,6 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
-import miniJava.CodeGenerator.Generator;
 import miniJava.SyntacticAnalyzer.Token;
 
 abstract public class Terminal extends AST {
@@ -19,6 +18,4 @@ abstract public class Terminal extends AST {
   public int kind;
   public String spelling;
   public TypeKind type;
-public void generate(Generator generator) {
-}
 }

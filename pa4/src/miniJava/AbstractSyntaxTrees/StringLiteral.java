@@ -26,7 +26,7 @@ public class StringLiteral extends Terminal {
     v.visitStringLiteral(this);
   }
 
-  public void generate(Generator generator) {
+  public <R> void generate(Generator<R> generator) {
     generator.visitStringLiteral(this);
   }
 }

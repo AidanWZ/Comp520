@@ -26,10 +26,12 @@ public class MethodDecl extends MemberDecl {
 
     public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
         v.visitMethodDecl(this);
-      }
+    }
+
+    public <R> void generate(Generator<R> generator) {
+        generator.visitMethodDecl(this);
+    }
 	
 	public ParameterDeclList parameterDeclList;
 	public StatementList statementList;
-	public void generate(Generator generator) {
-	}
 }

@@ -28,7 +28,7 @@ public class QualRef extends Reference {
         v.visitQRef(this);
 	}
 	
-	public void generate(Generator generator) {
+	public <R> void generate(Generator<R> generator) {
         generator.visitQRef(this);
     }
 

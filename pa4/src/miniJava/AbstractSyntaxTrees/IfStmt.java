@@ -36,7 +36,7 @@ public class IfStmt extends Statement
         v.visitIfStmt(this);
     }
 
-    public void generate(Generator generator) {
+    public <R> void generate(Generator<R> generator) {
         generator.visitIfStmt(this);
     }
     

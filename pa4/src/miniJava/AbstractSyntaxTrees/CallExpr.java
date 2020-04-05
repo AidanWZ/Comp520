@@ -28,7 +28,7 @@ public class CallExpr extends Expression
         v.visitCallExpr(this);
     }
 
-    public void generate(Generator generator) {
+    public <R> void generate(Generator<R> generator) {
         generator.visitCallExpr(this);
     }
     

@@ -29,7 +29,7 @@ public class ArrayType extends TypeDenoter {
 			v.visitArrayType(this);
 		}
 
-		public void generate(Generator generator) {
+		public <R> void generate(Generator<R> generator) {
 			generator.visitArrayType(this);
 		}
 

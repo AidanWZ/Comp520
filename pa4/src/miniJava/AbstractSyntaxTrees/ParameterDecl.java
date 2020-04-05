@@ -24,9 +24,10 @@ public class ParameterDecl extends LocalDecl {
 	
 	public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
 		v.visitParameterDecl(this);
-	  }
-
-	public void generate(Generator generator) {
 	}
+
+	public <R> void generate(Generator<R> generator) {
+		generator.visitParameterDecl(this);
+	}	
 }
 
