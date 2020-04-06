@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.Visitor;
@@ -26,6 +27,10 @@ public class BinaryExpr extends Expression
 
     public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
         v.visitBinaryExpr(this);
+    }
+
+    public <R> void generate(Generator<R> generator) {
+        generator.visitBinaryExpr(this);
     }
     
     public Operator operator;

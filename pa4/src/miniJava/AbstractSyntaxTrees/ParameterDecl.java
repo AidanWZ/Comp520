@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.TypeError;
@@ -23,6 +24,10 @@ public class ParameterDecl extends LocalDecl {
 	
 	public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
 		v.visitParameterDecl(this);
-	  }
+	}
+
+	public <R> void generate(Generator<R> generator) {
+		generator.visitParameterDecl(this);
+	}	
 }
 

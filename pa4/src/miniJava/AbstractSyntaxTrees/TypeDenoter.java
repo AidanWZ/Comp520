@@ -14,8 +14,7 @@ abstract public class TypeDenoter extends AST {
         typeKind = type;
     }
     
-    public TypeKind typeKind;
-    
+    public TypeKind typeKind;  
 }
 
         

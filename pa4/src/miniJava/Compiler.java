@@ -1,6 +1,7 @@
 package miniJava;
 
 import miniJava.AbstractSyntaxTrees.AST;
+import miniJava.CodeGenerator.ASTCodeGen;
 import miniJava.ContextualAnalyzer.ASTDisplay;
 import miniJava.ContextualAnalyzer.ASTIdentify;
 import miniJava.ContextualAnalyzer.IdentificationError;
@@ -23,7 +24,7 @@ public class Compiler {
     private static ASTDisplay display;
     private static AST ast;
     private static ASTIdentify identifier;
-    private static String idErrors;
+    private static ASTCodeGen codeGenerator;
     
     public static void getDebugLevel(String[] args) {
         try {
@@ -69,7 +70,7 @@ public class Compiler {
         }
         else {
             System.out.println("Valid Program");
-            System.exit(0);
+            return;
         }
     }
 
@@ -80,34 +81,32 @@ public class Compiler {
         }
         getDebugLevel(args);        
 		try {
-            display("getting sourcefile...");
             source = new SourceFile(args[0]);
             //source = new SourceFile(System.getProperty("user.dir") + args[0]);
-            //source.getContents();
-            display("Initializing scanner...");
             scanner  = new Scanner(source);
-            display("Initializing syntax error reporter...");
             parseReporter = new ErrorReporter();
-            display("Initializing id error reporter...");
             idReporter = new ErrorReporter();
-            display("Initializing type error reporter...");
             typeReporter = new ErrorReporter();
-            display("Initializing parser...");
             parser   = new Parser(scanner, parseReporter, debug);
-            display("Initializing ast display...");
-            display  = new ASTDisplay();            
-
-            display("Starting syntactic analysis...");
+            display("Syntactic analysis complete...");
+            // display("Initializing ast display...");
+            // display  = new ASTDisplay();                        
+            display("Starting Syntactic analysis...");
             ast = parser.parse();
-            display("Initializing ast identify...");
+            display = new ASTDisplay();
+            display("Syntactic analysis Complete...");
+            display("Starting Contextual analysis...");
             identifier = new ASTIdentify(idReporter, typeReporter, ast);
             displayAST();
-            display("Starting Identification/Type Checking...");
-            idErrors = identifier.visit(ast);
-            display("Syntactic analysis complete");
-
-            display("Checking for errors");
+            identifier.visit(ast);
+            display("Contextual analysis complete");
+            display("Checking for Compilation errors");            
             checkErrors();
+            display("No compilation errors found, compiling to " + args[0].replace(".java", ".mJAM"));
+            codeGenerator = new ASTCodeGen(args[0], ast);
+            //codeGenerator.generate();
+            display("Compilation complete");
+            System.exit(0);
         } 
         catch (SyntaxError e) {
             System.out.println("Syntax error occurred");
@@ -121,14 +120,5 @@ public class Compiler {
             System.out.println("Type error occurred");
 			System.exit(4);
         }
-        // catch (NullPointerException e) {
-        //     System.out.println(e);
-        //     System.exit(4);
-        // }
-        // catch (Exception e) {
-        //     System.out.println("File " + System.getProperty("user.dir") + args[0] + " not found");
-        //     System.out.println(e);
-        //     System.exit(4);
-        // }
 	}
 }

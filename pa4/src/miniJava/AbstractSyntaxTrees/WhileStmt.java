@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.TypeError;
@@ -25,7 +26,11 @@ public class WhileStmt extends Statement
 
     public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
         v.visitWhileStmt(this);
-      }
+    }
+
+    public <R> void generate(Generator<R> generator) {
+        generator.visitWhileStmt(this);
+    }
 
     public Expression cond;
     public Statement body;

@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.Visitor;
@@ -24,6 +25,10 @@ public class IdRef extends BaseRef {
 
 	public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
         v.visitIdRef(this);
+	}
+	
+	public <R> void generate(Generator<R> generator) {
+        generator.visitIdRef(this);
     }
 
 	public Identifier id;

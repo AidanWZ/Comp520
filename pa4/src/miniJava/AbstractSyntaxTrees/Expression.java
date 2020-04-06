@@ -14,5 +14,4 @@ public abstract class Expression extends AST {
   }
 
   public TypeKind type;
-  
 }

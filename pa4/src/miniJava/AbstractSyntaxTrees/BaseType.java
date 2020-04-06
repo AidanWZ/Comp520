@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.TypeError;
@@ -23,5 +24,9 @@ public class BaseType extends TypeDenoter
 
     public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
         v.visitBaseType(this);
-      }
+    }
+
+    public <R> void generate(Generator<R> generator) {
+        generator.visitBaseType(this);
+    }
 }

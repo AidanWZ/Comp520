@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.Visitor;
@@ -24,6 +25,10 @@ public class ClassType extends TypeDenoter
 
     public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
         v.visitClassType(this);
+    }
+
+    public <R> void generate(Generator<R> generator) {
+        generator.visitClassType(this);
     }
 
     public Identifier className;

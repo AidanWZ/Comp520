@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.TypeError;
@@ -27,6 +28,10 @@ public class FieldDecl extends MemberDecl {
 	
 	public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
 		v.visitFieldDecl(this);		
+	}
+
+	public <R> void generate(Generator<R> generator) {
+		generator.visitFieldDecl(this);
 	}
 }
 

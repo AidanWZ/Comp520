@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.Generator;
 import miniJava.ContextualAnalyzer.IdentificationError;
 import miniJava.ContextualAnalyzer.Traveller;
 import miniJava.ContextualAnalyzer.Visitor;
@@ -23,7 +24,11 @@ public class NewStringExpr extends NewExpr
 
     public <R> void visit(Traveller<R> v) throws TypeError, IdentificationError {
         v.visitNewStringExpr(this);
-      }
+    }
+
+    public <R> void generate(Generator<R> generator) {
+        generator.visitNewStringExpr(this);
+    }
 
     public TypeDenoter eltType;
     public Expression sizeExpr;
