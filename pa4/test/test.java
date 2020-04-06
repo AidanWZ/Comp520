@@ -1,6 +1,6 @@
 class Counter {
     
-    public void increase(int k) {
+    public static void increase(int k) {
         count = count + k;
     }
     public static void main(String [] args){
@@ -8,7 +8,12 @@ class Counter {
         counter.increase(3);
         System.out.println(counter.count);
     }
-    
-    public int count;
-    
+    public static int count;
 }
+
+// class Tester {
+//     public static void m1() {
+//         derp++;
+//     }
+//     public int derp;
+// }

@@ -55,19 +55,18 @@ import miniJava.AbstractSyntaxTrees.WhileStmt;
 
 
 public class ASTCodeGen implements Generator<Object> {
-	
-    public void generate(String inputFileName, AST ast) {
+
+    private String inputFileName;
+    private AST ast;
+    
+    public ASTCodeGen(String inputFileName, AST ast) {
+        this.inputFileName = inputFileName;
+        this.ast = ast;
+    }
+
+    public void writeToMjam() {
+        //write code to object code file (.mJAM)
         String objectCodeFileName = inputFileName.replace(".java", ".mJAM");
-        Machine.initCodeGen();
-		
-	    //generate call to main
-		Machine.emit(Op.LOADL,0);            			// array length 0
-		Machine.emit(Prim.newarr);           			// empty String array argument
-		int mainCallAddr = Machine.nextInstrAddr(); 	// record instr addr where main is called                                                // "main" is called
-		Machine.emit(Op.CALL,Reg.CB,-1);     			// static call main (address to be patched)
-		Machine.emit(Op.HALT,0,0,0);         			// end execution
-		                           			
-	    //write code to object code file (.mJAM)
 		ObjectFile objF = new ObjectFile(objectCodeFileName);
 		System.out.print("Writing object code file " + objectCodeFileName + " ... ");
 		if (objF.write()) {
@@ -77,8 +76,11 @@ public class ASTCodeGen implements Generator<Object> {
 		else {
             System.out.println("SUCCEEDED");
         }
-						
+    }
+
+    public void writeToAsm() {
         // create asm file using disassembler (.asm)
+        String objectCodeFileName = inputFileName.replace(".java", ".mJAM");
         System.out.print("Writing assembly file " + objectCodeFileName + " ... ");
         Disassembler d = new Disassembler(objectCodeFileName);
         if (d.disassemble()) {
@@ -87,13 +89,31 @@ public class ASTCodeGen implements Generator<Object> {
         }
         else {
             System.out.println("SUCCEEDED");
-        }                
-        
+        }
+    }
+
+    public void runCode() {
         //run code using debugger
+        String objectCodeFileName = inputFileName.replace(".java", ".mJAM");
         String asmCodeFileName = objectCodeFileName.replace(".mJAM",".asm");
         System.out.println("Running code in debugger ... ");
         Interpreter.debug(objectCodeFileName, asmCodeFileName);
         System.out.println("*** mJAM execution completed");
+    }
+
+    public void init() {
+        Machine.initCodeGen();
+    }
+
+    public void generate() {
+        init();
+		
+	    //generate call to main
+		Machine.emit(Op.LOADL,0);            			// array length 0
+		Machine.emit(Prim.newarr);           			// empty String array argument
+		int mainCallAddr = Machine.nextInstrAddr(); 	// record instr addr where main is called                                                // "main" is called
+		Machine.emit(Op.CALL,Reg.CB,-1);     			// static call main (address to be patched)
+		Machine.emit(Op.HALT,0,0,0);         			// end execution
     }
     
     ///////////////////////////////////////////////////////////////////////////////

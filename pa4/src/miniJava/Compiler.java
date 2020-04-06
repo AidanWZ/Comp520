@@ -103,8 +103,9 @@ public class Compiler {
             display("Checking for Compilation errors");            
             checkErrors();
             display("No compilation errors found, compiling to " + args[0].replace(".java", ".mJAM"));
-            codeGenerator.generate(args[0], ast);
-            display("Comilation complete");
+            codeGenerator = new ASTCodeGen(args[0], ast);
+            //codeGenerator.generate();
+            display("Compilation complete");
             System.exit(0);
         } 
         catch (SyntaxError e) {
