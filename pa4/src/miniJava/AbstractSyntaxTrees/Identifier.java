@@ -28,8 +28,8 @@ public class Identifier extends Terminal {
     v.visitIdentifier(this);
   }
 
-  public <R> void generate(Generator<R> generator) {
-
+  public <R> Object generate(Generator<R> generator) {
+    return generator.visitIdentifier(this);
   }
   
 }

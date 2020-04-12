@@ -28,8 +28,8 @@ public class NewArrayExpr extends NewExpr
         v.visitNewArrayExpr(this);
     }
 
-    public <R> void generate(Generator<R> generator) {
-        generator.visitNewArrayExpr(this);
+    public <R> Object generate(Generator<R> generator) {
+        return generator.visitNewArrayExpr(this);
     }
 
     public TypeDenoter eltType;

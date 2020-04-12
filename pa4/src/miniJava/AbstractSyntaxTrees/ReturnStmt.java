@@ -27,8 +27,8 @@ public class ReturnStmt extends Statement
 		v.visitReturnStmt(this);
 	}
 
-	public <R> void generate(Generator<R> generator) {
-        generator.visitReturnStmt(this);
+	public <R> Object generate(Generator<R> generator) {
+        return generator.visitReturnStmt(this);
     }
 
 	public Expression returnExpr;

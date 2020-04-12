@@ -30,8 +30,8 @@ public class FieldDecl extends MemberDecl {
 		v.visitFieldDecl(this);		
 	}
 
-	public <R> void generate(Generator<R> generator) {
-		generator.visitFieldDecl(this);
+	public <R> Object generate(Generator<R> generator) {
+		return generator.visitFieldDecl(this);
 	}
 }
 

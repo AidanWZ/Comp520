@@ -29,8 +29,8 @@ public class IxAssignStmt extends Statement
         v.visitIxAssignStmt(this);
     }
 
-    public <R> void generate(Generator<R> generator) {
-        generator.visitIxAssignStmt(this);
+    public <R> Object generate(Generator<R> generator) {
+        return generator.visitIxAssignStmt(this);
     }
     
     public Reference ref;

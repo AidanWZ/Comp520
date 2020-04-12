@@ -28,8 +28,8 @@ public class QualRef extends Reference {
         v.visitQRef(this);
 	}
 	
-	public <R> void generate(Generator<R> generator) {
-        generator.visitQRef(this);
+	public <R> Object generate(Generator<R> generator) {
+        return generator.visitQRef(this);
     }
 
 	public Reference ref;

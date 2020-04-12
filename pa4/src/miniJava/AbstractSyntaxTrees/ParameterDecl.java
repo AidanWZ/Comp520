@@ -26,8 +26,8 @@ public class ParameterDecl extends LocalDecl {
 		v.visitParameterDecl(this);
 	}
 
-	public <R> void generate(Generator<R> generator) {
-		generator.visitParameterDecl(this);
+	public <R> Object generate(Generator<R> generator) {
+		return generator.visitParameterDecl(this);
 	}	
 }
 

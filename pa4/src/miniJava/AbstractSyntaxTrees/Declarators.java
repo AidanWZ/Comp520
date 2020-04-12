@@ -39,8 +39,8 @@ public class Declarators extends Declaration {
         return;
     }
 
-    public <R> void generate(Generator<R> generator) {
+    public <R> Object generate(Generator<R> generator) {
         // TODO Auto-generated method stub
-        return;
+        return null;
     }
 }

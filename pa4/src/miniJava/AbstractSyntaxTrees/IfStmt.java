@@ -36,8 +36,8 @@ public class IfStmt extends Statement
         v.visitIfStmt(this);
     }
 
-    public <R> void generate(Generator<R> generator) {
-        generator.visitIfStmt(this);
+    public <R> Object generate(Generator<R> generator) {
+        return generator.visitIfStmt(this);
     }
     
     public Expression cond;

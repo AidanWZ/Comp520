@@ -28,8 +28,8 @@ public class UnaryExpr extends Expression
         v.visitUnaryExpr(this);
     }
 
-    public <R> void generate(Generator<R> generator) {
-        generator.visitUnaryExpr(this);
+    public <R> Object generate(Generator<R> generator) {
+        return generator.visitUnaryExpr(this);
     }
 
     public Operator operator;

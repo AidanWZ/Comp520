@@ -28,8 +28,8 @@ public class CallExpr extends Expression
         v.visitCallExpr(this);
     }
 
-    public <R> void generate(Generator<R> generator) {
-        generator.visitCallExpr(this);
+    public <R> Object generate(Generator<R> generator) {
+        return generator.visitCallExpr(this);
     }
     
     public Reference functionRef;

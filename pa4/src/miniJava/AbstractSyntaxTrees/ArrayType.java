@@ -29,8 +29,8 @@ public class ArrayType extends TypeDenoter {
 			v.visitArrayType(this);
 		}
 
-		public <R> void generate(Generator<R> generator) {
-			generator.visitArrayType(this);
+		public <R> Object generate(Generator<R> generator) {
+			return generator.visitArrayType(this);
 		}
 
 		public TypeDenoter eltType;

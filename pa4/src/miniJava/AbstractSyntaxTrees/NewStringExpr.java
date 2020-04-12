@@ -26,8 +26,8 @@ public class NewStringExpr extends NewExpr
         v.visitNewStringExpr(this);
     }
 
-    public <R> void generate(Generator<R> generator) {
-        generator.visitNewStringExpr(this);
+    public <R> Object generate(Generator<R> generator) {
+        return generator.visitNewStringExpr(this);
     }
 
     public TypeDenoter eltType;

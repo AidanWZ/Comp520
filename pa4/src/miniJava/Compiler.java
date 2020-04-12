@@ -104,7 +104,7 @@ public class Compiler {
             checkErrors();
             display("No compilation errors found, compiling to " + args[0].replace(".java", ".mJAM"));
             codeGenerator = new ASTCodeGen(args[0], ast);
-            //codeGenerator.generate();
+            codeGenerator.generate();
             display("Compilation complete");
             System.exit(0);
         } 
