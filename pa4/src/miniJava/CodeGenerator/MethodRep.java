@@ -1,9 +1,9 @@
 package miniJava.CodeGenerator;
 
 public class MethodRep extends RuntimeEntity {
-    public int offsetInClass;
+    public int routineAddress;
 
-    public MethodRep(int offsetInClass) {
-        this.offsetInClass = offsetInClass;
+    public MethodRep(int routineAddress) {
+        this.routineAddress = routineAddress;
     }
 }

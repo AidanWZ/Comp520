@@ -736,7 +736,8 @@ public class ASTIdentify implements Traveller<Object> {
             Reference temp = ((QualRef)stmt.methodRef).ref;
             while (temp.getClass().equals(new QualRef(null, null, null).getClass())) {
                 temp = ((QualRef)temp).ref;
-            }            
+            } 
+            stmt.methodRef = temp;           
             ExprList al = stmt.argList;
             int counter = 0;
             for (Expression e: al) { 
@@ -799,7 +800,7 @@ public class ASTIdentify implements Traveller<Object> {
                     identificationError(stmt.posn.start, "visitCallStmt", "Non static reference to static member");
                 }
             } 
-        }                
+        }             
         return null;
     }
     
@@ -899,22 +900,17 @@ public class ASTIdentify implements Traveller<Object> {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
-    public Object visitUnaryExpr(UnaryExpr expr) throws TypeError, IdentificationError {
-        if (expr.operator.spelling.equals("!") && isSameTypeKind(expr.expr.type, TypeKind.BOOLEAN)) {
-            expr.operator.visit(this);
-            expr.expr.visit(this);
+    public Object visitUnaryExpr(UnaryExpr expr) throws TypeError, IdentificationError {        
+        expr.operator.visit(this);
+        expr.expr.visit(this);
+        if (expr.operator.spelling.equals("!") && isSameTypeKind(expr.expr.type, TypeKind.BOOLEAN)) {                        
             expr.type = expr.expr.type;
         } 
-        else {
-            typeError(expr.posn.start, "visitUnaryExpr", "The operator ! is undefined for the argument type(s) " + expr.expr.type);
-        }
-        if (expr.operator.spelling.equals("-") && isSameTypeKind(expr.expr.type, TypeKind.INT)) {
-            expr.operator.visit(this);
-            expr.expr.visit(this);
+        else if (expr.operator.spelling.equals("-") && isSameTypeKind(expr.expr.type, TypeKind.INT)) {
             expr.type = expr.expr.type;
         }  
         else {
-            typeError(expr.posn.start, "visitUnaryExpr", "The operator - is undefined for the argument type(s) " + expr.expr.type);
+            typeError(expr.posn.start, "visitUnaryExpr", "The operator " + expr.operator.spelling + " is undefined for the argument type(s) " + expr.expr.type);
         }
         return null;
     }

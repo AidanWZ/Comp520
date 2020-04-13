@@ -70,6 +70,7 @@ public class Compiler {
         }
         else {
             System.out.println("Valid Program");
+            System.out.println("*********************************************");
             return;
         }
     }
@@ -106,6 +107,7 @@ public class Compiler {
             codeGenerator = new ASTCodeGen(args[0], ast);
             codeGenerator.generate();
             display("Compilation complete");
+            //System.out.println("Writing .mJAM to " + args[0].replace(".java", ".mJAM") + " and .asm to " + args[0].replace(".java", ".asm") );
             System.exit(0);
         } 
         catch (SyntaxError e) {

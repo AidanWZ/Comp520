@@ -48,7 +48,7 @@ public final class Machine {
 		 */
 		CALLD,
 		/**
-		 * Rturn from the current routine, pop an n word object from the stack, pop the topmost frame, pop d arguments, push result r onto stack (Op, length, reg, displacement)
+		 * Return from the current routine, pop an n word object from the stack, pop the topmost frame, pop d arguments, push result r onto stack (Op, length, reg, displacement)
 		 */
 		RETURN,
 		/**
@@ -138,43 +138,152 @@ public final class Machine {
 	 * mJAM primitives
 	 */
 	public enum Prim {
+		/**
+		 * 
+		 */
 	    id,
-	    not,
-	    and,
-	    or,
-	    succ,
-	    pred,
-	    neg,
-	    add,
-	    sub,
-	    mult,
-	    div,
-	    mod,
-	    lt,
-	    le,
-	    ge,
-	    gt,
-	    eq,
-	    ne,
-	    eol,
-	    eof,
-	    get,
-	    put,
-	    geteol,
-	    puteol,
-	    getint,
-	    putint,
-	    putintnl,
-	    alloc,
-	    dispose,
-	    newobj,
-	    newarr,
-	    arraylen,
-	    arrayref,
-	    arrayupd,
-	    fieldref,
-	    fieldupd;
+		/**
+		 * 
+		 */
+		not,
+		/**
+		 * 
+		 */
+		and,
+		/**
+		 * 
+		 */
+		or,
+		/**
+		 * 
+		 */
+		succ,
+		/**
+		 * 
+		 */
+		pred,
+		/**
+		 * 
+		 */
+		neg,
+		/**
+		 * 
+		 */
+		add,
+		/**
+		 * 
+		 */
+		sub,
+		/**
+		 * 
+		 */
+		mult,
+		/**
+		 * 
+		 */
+		div,
+		/**
+		 * 
+		 */
+		mod,
+		/**
+		 * 
+		 */
+		lt,
+		/**
+		 * 
+		 */
+		le,
+		/**
+		 * 
+		 */
+		ge,
+		/**
+		 * 
+		 */
+		gt,
+		/**
+		 * 
+		 */
+		eq,
+		/**
+		 * 
+		 */
+		ne,
+		/**
+		 * 
+		 */
+		eol,
+		/**
+		 * 
+		 */
+		eof,
+		/**
+		 * 
+		 */
+		get,
+		/**
+		 * 
+		 */
+		put,
+		/**
+		 * 
+		 */
+		geteol,
+		/**
+		 * 
+		 */
+		puteol,
+		/**
+		 * 
+		 */
+		getint,
+		/**
+		 * 
+		 */
+		putint,
+		/**
+		 * 
+		 */
+		putintnl,
+		/**
+		 * 
+		 */
+		alloc,
+		/**
+		 * 
+		 */
+		dispose,
+		/**
+		 * 
+		 */
+		newobj,
+		/**
+		 * 
+		 */
+		newarr,
+		/**
+		 * 
+		 */
+		arraylen,
+		/**
+		 * 
+		 */
+		arrayref,
+		/**
+		 * 
+		 */
+		arrayupd,
+		/**
+		 * 
+		 */
+		fieldref,
+		/**
+		 * 
+		 */
+		fieldupd;
 	}
+
 	public static Prim [] intToPrim = Prim.values();
 
 	public static int primToInt(Prim p) {

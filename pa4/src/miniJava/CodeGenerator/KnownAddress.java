@@ -2,11 +2,10 @@ package miniJava.CodeGenerator;
 
 public class KnownAddress extends Address {
 
-    public int declarationlevel;
     public int displacement;
 
-    public KnownAddress(int declarationlevel, int displacement) {
-        this.declarationLevel = declarationlevel;
+    public KnownAddress(int declarationLevel, int displacement) {
+        this.declarationLevel = declarationLevel;
         this.displacement = displacement;
     }
 

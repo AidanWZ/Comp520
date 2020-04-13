@@ -4,12 +4,9 @@ class Counter {
         count = count + k;
     }
     public static void main(String [] args){
-        if (-1 > 0) {
-            System.out.println(2);
-        }
-        else {
-            System.out.println(3);
-        }
+        Counter counter = new Counter();
+        counter.increase(3);
+        System.out.println(counter.count);
     }
     public int count;
 }
