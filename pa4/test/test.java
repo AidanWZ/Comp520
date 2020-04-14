@@ -1,15 +1,16 @@
 class Counter {
-    
-    public void increase(int k) {
-        count = count + k;
-    }
+
+    public static int count;
     public static void main(String [] args){
-        if (-1 > 0) {
-            System.out.println(2);
+        int[] i = new int[2];
+        i[0] = 3;
+        if (i[0] != 1) {
+            print(i[0]);
         }
-        else {
-            System.out.println(3);
-        }
+        System.out.println(20);
     }
-    public int count;
+
+    public static void print(int par) {
+        System.out.println(par);
+    }
 }

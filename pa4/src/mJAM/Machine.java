@@ -139,19 +139,19 @@ public final class Machine {
 	 */
 	public enum Prim {
 		/**
-		 * 
+		 * identifier
 		 */
 	    id,
 		/**
-		 * 
+		 * logical not
 		 */
 		not,
 		/**
-		 * 
+		 * logical and
 		 */
 		and,
 		/**
-		 * 
+		 * logical or
 		 */
 		or,
 		/**
@@ -163,83 +163,83 @@ public final class Machine {
 		 */
 		pred,
 		/**
-		 * 
+		 * arithmetic negative
 		 */
 		neg,
 		/**
-		 * 
+		 * arithmetic addition
 		 */
 		add,
 		/**
-		 * 
+		 * arithmetic subtraction
 		 */
 		sub,
 		/**
-		 * 
+		 * arithmetic multiplication
 		 */
 		mult,
 		/**
-		 * 
+		 * arithmetic division
 		 */
 		div,
 		/**
-		 * 
+		 * arithmetc modulus
 		 */
 		mod,
 		/**
-		 * 
+		 * arithmetic less than
 		 */
 		lt,
 		/**
-		 * 
+		 * arithmetic less than or equal to
 		 */
 		le,
 		/**
-		 * 
+		 * arithmetic greater than or equal to
 		 */
 		ge,
 		/**
-		 * 
+		 * arithmetic greater than
 		 */
 		gt,
 		/**
-		 * 
+		 * boolean equal
 		 */
 		eq,
 		/**
-		 * 
+		 * boolean not equal
 		 */
 		ne,
 		/**
-		 * 
+		 * boolean regular expression end of line
 		 */
 		eol,
 		/**
-		 * 
+		 * boolean regular expression end of file
 		 */
 		eof,
 		/**
-		 * 
+		 * read a character stoe it at r offset from r
 		 */
 		get,
 		/**
-		 * 
+		 * write a character c
 		 */
 		put,
 		/**
-		 * 
+		 * read characters to end of line
 		 */
 		geteol,
 		/**
-		 * 
+		 * write an end of line
 		 */
 		puteol,
 		/**
-		 * 
+		 * read an integer literal and store at d offset from r
 		 */
 		getint,
 		/**
-		 * 
+		 * write an intger literal 
 		 */
 		putint,
 		/**

@@ -269,7 +269,7 @@ public class Parser {
 	//if the type is int or id we need to figure out if it is an int/id/int array/id array
 	public TypeDenoter parseType() throws SyntaxError{
 		display("Running parseType");
-		Token current = null;
+		Token current = null;		
 		switch(currentToken.kind){
 			case Token.STRING:
 				current = currentToken;
@@ -282,10 +282,10 @@ public class Parser {
 				else {
 					return new BaseType(TypeKind.STRING, currentToken.position);
 				}	
-			case Token.INT:
+			case Token.INT:								
 				current = currentToken;
 				acceptIt();
-				if(currentToken.kind == Token.LBRACKET){
+				if(currentToken.kind == Token.LBRACKET){									
 					acceptIt();
 					accept(Token.RBRACKET, "parseType");
 					return new ArrayType(new BaseType(TypeKind.INT, current.position), current.position);
@@ -639,7 +639,7 @@ public class Parser {
 				if (currentToken.kind == Token.EQUALS) {
 					accept(Token.EQUALS, "parseStatement");
 					e_int = parseExpression();
-					accept(Token.SEMICOLON, "parseStatement");
+					accept(Token.SEMICOLON, "parseStatement");					
 					return new VarDeclStmt(new VarDecl(intType, id_int.spelling, current.position), e_int, current.position);
 				}		
 				else if (currentToken.kind == Token.SEMICOLON) {
@@ -763,21 +763,21 @@ public class Parser {
 				if (Token.isUnop(currentToken.spelling)) {
 					return new UnaryExpr(parseUnop(), parseExpandedExpression(), current.position);
 				}				
-			case Token.NEW:		
+			case Token.NEW:					
 				current = currentToken;
 				acceptIt();
 				Identifier id = parseIdentifier();
-				if(currentToken.kind == Token.LBRACKET) {
+				if(currentToken.kind == Token.LBRACKET) {					
 					accept(Token.LBRACKET, "parseExpandedExpression");
-					if (currentToken.kind == Token.RBRACKET) {
+					if (currentToken.kind == Token.RBRACKET) {							
 						accept(Token.RBRACKET, "parseExpandedExpression");
 						switch(id.spelling) {
 							case "int":
-								return new NewArrayExpr(new BaseType(TypeKind.INT, current.position), null, current.position);
+								return new NewArrayExpr(new ArrayType(new BaseType(TypeKind.INT, current.position), current.position), null, current.position);
 							case "boolean":
-								return new NewArrayExpr(new BaseType(TypeKind.BOOLEAN, current.position), null, current.position);
+								return new NewArrayExpr(new ArrayType(new BaseType(TypeKind.BOOLEAN, current.position), current.position), null, current.position);
 							case "<id>":
-								return new NewArrayExpr(new ClassType(id, current.position), null, current.position);
+								return new NewArrayExpr(new ArrayType(new ClassType(id, current.position), current.position), null, current.position);
 						}						
 					}
 					else {						
@@ -785,9 +785,11 @@ public class Parser {
 						accept(Token.RBRACKET, "parseExpandedExpression");
 						switch(id.spelling) {
 							case "int":
-								return new NewArrayExpr(new BaseType(TypeKind.INT, current.position), expr, current.position);
+								return new NewArrayExpr(new ArrayType(new BaseType(TypeKind.INT, current.position), current.position), expr, current.position);
 							case "boolean":
-								return new NewArrayExpr(new BaseType(TypeKind.BOOLEAN, current.position), expr, current.position);
+								return new NewArrayExpr(new ArrayType(new BaseType(TypeKind.BOOLEAN, current.position), current.position), expr, current.position);
+							case "<id>":
+								return new NewArrayExpr(new ArrayType(new ClassType(id, current.position), current.position), expr, current.position);
 							default:							
 								return new NewArrayExpr(new ClassType(id, current.position), expr, current.position);
 						}

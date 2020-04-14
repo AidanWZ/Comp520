@@ -717,7 +717,6 @@ public class ASTIdentify implements Traveller<Object> {
         stmt.ref.visit(this);
         stmt.ix.visit(this);
         stmt.exp.visit(this);
-        
         if (isSameTypeKind(stmt.ref.decl.type.typeKind, TypeKind.ARRAY) && // ref type must be array type
             isSameTypeKind(stmt.ix.type, TypeKind.INT) &&                  // index must be int type
             isSameTypeKind(((ArrayType)stmt.ref.decl.type).eltType.typeKind, stmt.exp.type)) {  // assignment type must equal reference type            
@@ -792,11 +791,11 @@ public class ASTIdentify implements Traveller<Object> {
                 counter++;
             }
             //check for static violation                
-            if (!((MemberDecl) search(stmt.methodRef.decl.name)).isStatic && methodStatic) {
+            if (!((MemberDecl) searchAllMembers(stmt.methodRef.decl.name)).isStatic && methodStatic) {
                 if (methodStatic) {
                     identificationError(stmt.posn.start, "visitCallStmt", "Cannot reference non-static symbol " + stmt.methodRef.decl.name + " in static context");
                 }
-                else if (!((MemberDecl) search(stmt.methodRef.decl.name)).isStatic) {
+                else if (!((MemberDecl) searchAllMembers(stmt.methodRef.decl.name)).isStatic) {
                     identificationError(stmt.posn.start, "visitCallStmt", "Non static reference to static member");
                 }
             } 
@@ -918,7 +917,7 @@ public class ASTIdentify implements Traveller<Object> {
     public Object visitBinaryExpr(BinaryExpr expr) throws TypeError, IdentificationError {
         expr.operator.visit(this);
         expr.left.visit(this);
-        expr.right.visit(this);
+        expr.right.visit(this);        
         //if comparing two class types
         if (isSameTypeKind(expr.left.type, TypeKind.CLASS) && isSameTypeKind(expr.right.type, TypeKind.CLASS)) {
             if (expr.left.getClass().equals(new NewObjectExpr(null, null).getClass()) &&
@@ -1137,28 +1136,13 @@ public class ASTIdentify implements Traveller<Object> {
     public Object visitIxExpr(IxExpr ie) throws TypeError, IdentificationError {
         ie.ref.visit(this);
         ie.ixExpr.visit(this);
-        //if the reference was a variable
-        // if (ie.ref.decl.getClass().equals(new VarDecl(null, null, null).getClass())) {
-        //     //if the reference variable is a not an array type
-        //     System.out.println(((VarDecl)((IdRef)ie.ref).decl).type.typeKind);
-        //     if (!isSameTypeKind(search(((IdRef)ie.ref).id.spelling).type.typeKind, TypeKind.ARRAY)) {
-        //         typeError(ie.posn.start, "visitIxExpr", "The type of the expression must be an ARRAY type but it resolved to " + search(((VarDecl)ie.ref.decl).name).type.typeKind);
-        //     }
-        // }
-        // // if the reference is a field
-        // else if (ie.ref.decl.getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass())) {
-        //     // if the reference field is not an array type
-        //     if (!isSameTypeKind(search(((FieldDecl)ie.ref.decl).name).type.typeKind, TypeKind.ARRAY)) {
-        //         typeError(ie.posn.start, "visitIxExpr", "The type of the expression must be an ARRAY type but it resolved to " + search(((FieldDecl)ie.ref.decl).name).type.typeKind);
-        //     }
-        // }
         if (isSameTypeKind(ie.ixExpr.type, TypeKind.INT)) { 
             if (ie.ref.decl.type.getClass().equals(new ClassType(null, null).getClass())) {
                 ie.type = ((ClassType)ie.ref.decl.type).typeKind;
             }    
             else if (ie.ref.decl.type.getClass().equals(new ArrayType(null, null).getClass())) {
                 ie.type = ((ArrayType)ie.ref.decl.type).eltType.typeKind;
-            }              
+            }                        
         }
         else {
             if (!isSameTypeKind(ie.ixExpr.type, TypeKind.INT)) {
@@ -1187,7 +1171,6 @@ public class ASTIdentify implements Traveller<Object> {
             if (!(previousRef.decl.getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass()) ||
                 previousRef.decl.getClass().equals(new ClassDecl(null, null, null, null).getClass()) ||
                 previousRef.decl.getClass().equals(new MethodDecl(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)), new ParameterDeclList(), new StatementList(), new SourcePosition(0, 0)).getClass()))) {
-                    System.out.println( previousRef.decl.getClass());
                 if (ref.getClass().equals(new QualRef(null, null, null).getClass())) {
                     identificationError(expr.posn.start, "visitCallExpr", ((QualRef) ref).id.spelling + " cannot be resolved or is not a field");
                 }
@@ -1392,11 +1375,11 @@ public class ASTIdentify implements Traveller<Object> {
         }
         //if reference is member of another class
         else {             
-            Reference ref = qr.ref;            
+            Reference ref = qr.ref; 
+            Reference previousRef = qr;           
             while (ref.getClass().equals(new QualRef(null, null, null).getClass())) {                
                 ref.visit(this);
-                Reference previousRef = ref; 
-                
+                previousRef = ref;                 
                 if (!(previousRef.decl.getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass()) ||
                     previousRef.decl.getClass().equals(new ClassDecl(null, null, null, null).getClass()) ||
                     previousRef.decl.getClass().equals(new MethodDecl(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)), new ParameterDeclList(), new StatementList(), new SourcePosition(0, 0)).getClass()))) {                                                
@@ -1410,7 +1393,7 @@ public class ASTIdentify implements Traveller<Object> {
                 previousRef = ref;
                 ref = ((QualRef)ref).ref; 
             }             
-            ((IdRef)ref).visit(this);                             
+            ((IdRef)ref).visit(this);  
             if (((MemberDecl)searchAllMembers(((IdRef)ref).id.spelling)).isStatic  || staticRef) {
                 qr.decl = searchAllMembers(((IdRef)ref).id.spelling);
             }

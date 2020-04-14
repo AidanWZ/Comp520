@@ -7,9 +7,10 @@ package miniJava.CodeGenerator;
 
 import miniJava.AbstractSyntaxTrees.AssignStmt;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
-import java.util.Stack;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Scanner;
 
 import mJAM.Disassembler;
 import mJAM.Instruction;
@@ -107,6 +108,14 @@ public class ASTCodeGen implements Generator<Object> {
      * the amount of space used in the global segment
      */
     private short stackSpaceUsed;
+    /**
+     * the amount of space used in the heap segment
+     */
+    private short heapSpaceUsed;
+    /**
+     * Hashmap to hold names and addresses of unmatched method calls
+     */
+    private HashMap<String, Integer> incompleteInstructions;
     
     public ASTCodeGen(String inputFileName, AST ast) {
         this.inputFileName = inputFileName;
@@ -116,6 +125,8 @@ public class ASTCodeGen implements Generator<Object> {
         this.declarationLevel = 0;
         this.frameSpaceUsed = 0;
         this.stackSpaceUsed = 0;
+        this.heapSpaceUsed = -1;
+        this.incompleteInstructions = new HashMap<String, Integer>();
     }
 
     public void writeToMjam() {
@@ -234,6 +245,17 @@ public class ASTCodeGen implements Generator<Object> {
         }
         return null;
     }
+
+    public void checkForUnpatched(String methodName) {
+        Iterator<Map.Entry<String, Integer>> entryIterator = this.incompleteInstructions.entrySet().iterator();
+        while(entryIterator.hasNext()) {
+            Map.Entry<String, Integer> next = entryIterator.next();
+            if (next.getKey().equals(methodName)) {
+                Machine.patch(next.getValue(), Machine.nextInstrAddr());
+                return;
+            }
+        }
+    }
     
     public void generate() {
         //init CB
@@ -256,7 +278,18 @@ public class ASTCodeGen implements Generator<Object> {
         writeToMjam();
         writeToAsm();
         //run code for testing
-        runCode();
+        Scanner s = new Scanner(System.in);
+        System.out.println("d for debug, n for normal");
+        String input = s.nextLine();
+        if (input.equals("d")) {
+            runCodeDebug();
+        }
+        else if (input.equals("n")) {
+            runCode();
+        }
+        else {
+            System.out.println("Done");
+        }
         return;               			
     }
     
@@ -305,9 +338,12 @@ public class ASTCodeGen implements Generator<Object> {
     }
     
     public Object visitMethodDecl(MethodDecl m){
+        //check for main method
         if (isMain(m)) {
             this.mainMethodAddr = Machine.nextInstrAddr();
         }
+        //check for unfound methods
+        checkForUnpatched(m.name);
         //create new runtime entity
         m.entity = new MethodRep(Machine.nextInstrAddr()-1); 
         //save number of arguments
@@ -348,7 +384,6 @@ public class ASTCodeGen implements Generator<Object> {
     
     public Object visitVarDecl(VarDecl vd){
         vd.type.generate(this);
-        vd.entity = new KnownAddress(this.declarationLevel, this.frameSpaceUsed);
         return null;
     }
  
@@ -389,14 +424,39 @@ public class ASTCodeGen implements Generator<Object> {
         return null;
     }
     
-    public Object visitVardeclStmt(VarDeclStmt stmt){ 
-        //create runtime entity for variable        
-        stmt.varDecl.generate(this); 
-        if (stmt.initExp != null) {
-            stmt.initExp.generate(this);
-        }       
-        int s = stmt.varDecl.entity.size;
-        this.frameSpaceUsed += s;
+    public Object visitVardeclStmt(VarDeclStmt stmt){
+        //if the var declaration is an array
+        if (stmt.varDecl.type.getClass().equals(new ArrayType(null, null).getClass())) {
+            //generate var decl entity
+            stmt.varDecl.entity = new KnownAddress(this.declarationLevel, this.heapSpaceUsed);
+            if (stmt.initExp != null) {
+                //load value of init expression onto the stack
+                stmt.initExp.generate(this);
+                //load address of heap top onto the stack
+                Machine.emit(Machine.Op.LOADA, 1, Machine.Reg.HT, 0);
+                //save value to top of heap
+                Machine.emit(Machine.Op.STOREI, 1, Machine.Reg.HB, this.heapSpaceUsed);                                                        
+            } 
+            //create runtime entity for variable   
+            stmt.varDecl.generate(this);    
+            int displacement = ((KnownAddress)stmt.varDecl.entity).displacement;
+            this.heapSpaceUsed -= displacement;
+        } 
+        //if the variable is a base or class type
+        else {
+            //generate var decl entity
+            stmt.varDecl.entity = new KnownAddress(this.declarationLevel, this.frameSpaceUsed);
+            if (stmt.initExp != null) {
+                //load value of init expression onto the stack
+                stmt.initExp.generate(this);
+                //save value to variable address
+                Machine.emit(Machine.Op.STORE, 1, Machine.Reg.LB, this.frameSpaceUsed);                 
+            }     
+            //create runtime entity for variable        
+            stmt.varDecl.generate(this);  
+            int size = stmt.varDecl.entity.size;
+            this.frameSpaceUsed += size;
+        }        
         return null;
     }
     
@@ -404,15 +464,15 @@ public class ASTCodeGen implements Generator<Object> {
         int address = 0;
         if (stmt.ref.decl.getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass())) {
             address = ((FieldRep)stmt.ref.decl.entity).offsetFromSB;
-            Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.OB, address);
+            //Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.OB, address);
         }
         else if (stmt.ref.decl.getClass().equals(new ParameterDecl(null, null, null).getClass())) {
             address = ((KnownAddress)stmt.ref.decl.entity).displacement;
-            Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.OB, address);
+            //Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.OB, address);
         }
         else if (stmt.ref.decl.getClass().equals(new VarDecl(null, null, null).getClass())) {
             address = ((KnownAddress)stmt.ref.decl.entity).displacement;
-            Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.LB, address);
+            //Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.LB, address);
         }
         //fetch address relative to LB
         
@@ -420,7 +480,7 @@ public class ASTCodeGen implements Generator<Object> {
         //push value of expression onto the top of the stack
         stmt.val.generate(this);
         //assign value to address
-        Machine.emit(Machine.Op.STORE, 1, Machine.Reg.OB, address);
+        Machine.emit(Machine.Op.STORE, 1, Machine.Reg.LB, address);
         return null;
     }
     
@@ -429,16 +489,16 @@ public class ASTCodeGen implements Generator<Object> {
         stmt.ref.generate(this);
         //fetch address of variable relative to LB
         int varAddress = ((KnownAddress)stmt.ref.decl.entity).displacement;
-        //push address onto the stack
-        Machine.emit(Machine.Op.PUSH, 1, Machine.Reg.LB, varAddress);                
+        //push array address onto the stack
+        Machine.emit(Machine.Op.LOADA, 1, Machine.Reg.HB, varAddress);                
         //push value of expression onto the stack
         stmt.exp.generate(this);        
         //push value of index expression onto the stack
         stmt.ix.generate(this);
         //add addres and offset to get new address
         Machine.emit(Machine.Prim.add);
-        //store expression value at offset address 
-        Machine.emit(Machine.Op.STOREI);
+        //store expression value at new offset address 
+        Machine.emit(Machine.Op.STOREI, 1, Machine.Reg.HB, 0);
         return null;
     }
         
@@ -461,12 +521,28 @@ public class ASTCodeGen implements Generator<Object> {
             Machine.emit(Machine.Prim.putintnl);
         }
         else {
-            //fetch address of method ref from runtime entity
-            int offset = ((MethodRep)method.entity).routineAddress;
-            //load address of method instruction onto stack
-            Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.LB, offset);
-            //create new routine base on execution stack
-            Machine.emit(Machine.Op.CALLI, Machine.Reg.CB, offset+1);
+            int offset;
+            // if the method is declared after its first invocation
+            if (method.entity == null) {
+                //saving address to be patched when method is encountered
+                incompleteInstructions.put(method.name, Machine.nextInstrAddr());                
+                offset = 0;
+                //load address of method instruction onto stack
+                Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.LB, offset);
+                //saving address to be patched when method is encountered
+                incompleteInstructions.put(method.name, Machine.nextInstrAddr());
+                //create new routine base on execution stack
+                Machine.emit(Machine.Op.CALLI, Machine.Reg.CB, offset+1);
+            }
+            else {
+                //fetch address of method ref from runtime entity
+                offset = ((MethodRep)method.entity).routineAddress;
+                //load address of method instruction onto stack
+                Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.LB, offset);
+                //create new routine base on execution stack
+                Machine.emit(Machine.Op.CALLI, Machine.Reg.CB, offset+1);
+            }           
+            
         }
         return null;
     }
@@ -481,48 +557,57 @@ public class ASTCodeGen implements Generator<Object> {
         return null;    
     }
     
-    public Object visitIfStmt(IfStmt stmt){
-        //generate code instruction for conditional
+    public Object visitIfStmt(IfStmt stmt) {
+        //push true or false value onto the stack
         stmt.cond.generate(this);
-        //conditional jump statement to 
-        Machine.emit(Machine.Op.JUMPIF, -1); //patchme
+        //address of jump instruction
+        int jumpAddress = Machine.nextInstrAddr();
+        //conditional jump statement to end or else statement
+        Machine.emit(Machine.Op.JUMPIF, 0, Machine.Reg.CB, 0); //patchme
         //generate code for else block
         if (stmt.elseStmt == null) {
-            
-        }
-        else {
-            stmt.elseStmt.generate(this);
-            //generate code for if block
+            //generate code for then block
             stmt.thenStmt.generate(this);
-            //save address of jump instruction to be patched
-            int jumpInst = Machine.nextInstrAddr();
-            //jump to end of if else block
-            Machine.emit(Machine.Op.JUMP, Machine.Reg.CB, 0); // patchme
-            int nextInst = Machine.nextInstrAddr();
-            Machine.patch(jumpInst, nextInst);
-            return null;
+            //patch
+            Machine.patch(jumpAddress, Machine.nextInstrAddr());
         }
-        
-        
+        else {            
+            //generate code for then block
+            stmt.thenStmt.generate(this);
+            //instruction of jump to end of if else block
+            int jumpInst = Machine.nextInstrAddr();
+            //skip to end of if else
+            Machine.emit(Machine.Op.JUMP, 0); //patch me
+            // address of else statement
+            int elseAddress = Machine.nextInstrAddr();
+            //generate code for else statment
+            stmt.elseStmt.generate(this);
+            //address of end of if else
+            int endAddress = Machine.nextInstrAddr();           
+            //patch
+            Machine.patch(jumpAddress, elseAddress);
+            Machine.patch(jumpInst, endAddress);
+        }
+        return null;
     }
     
     public Object visitWhileStmt(WhileStmt stmt){
-        //saves value of current instruction address
-        int j = Machine.nextInstrAddr();
-        //jump to conditional of the loop
-        Machine.emit(Machine.Op.JUMP, Machine.Reg.CB, 0); // patchme
-        //save value of cuurent instruction address at top of the loop body
-        int g = Machine.nextInstrAddr();
+        //address of conditional
+        int condAddress = Machine.nextInstrAddr();
+        //generate instruction for conditional
+        stmt.cond.generate(this);
+        //address of jumop to end instruction
+        int jumpEndAddress = Machine.nextInstrAddr();
+        //jump to end of the loop
+        Machine.emit(Machine.Op.JUMPIF, 0, Machine.Reg.CB, 0); // patchme
         //emit code for loop body
         stmt.body.generate(this);
         //save address of current instruction of conditional at j
-        int h = Machine.nextInstrAddr();
-        // add address to jump too for conditional h
-        Machine.patch(j, h);
-        //generate instruction for conditional
-        stmt.cond.generate(this);
-        //compare value on top of the stack with true
-        Machine.emit(Machine.Op.JUMPIF, Machine.Reg.CB, g);                
+        int endOfLoopAddress = Machine.nextInstrAddr();        
+        // jump back to conditional
+        Machine.emit(Machine.Op.JUMP, Machine.Reg.CB, condAddress);
+        //patch jump instruction after conditional with end of loop
+        Machine.patch(jumpEndAddress, endOfLoopAddress+1);                        
         return null;
     }
     
@@ -572,7 +657,7 @@ public class ASTCodeGen implements Generator<Object> {
         //load value held by reference onto the stack        
         if (expr.ref.decl.getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass())) {            
             address = ((FieldRep)expr.ref.decl.entity).offsetFromSB;
-            //Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.LB, address);
+            Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.OB, address);
             int offSetInClass = ((FieldRep)expr.ref.decl.entity).offsetInClass;
             if (expr.ref.getClass().equals(new QualRef(null, null, null).getClass())) {
                 Machine.emit(Machine.Op.LOADL, offSetInClass);
@@ -588,7 +673,7 @@ public class ASTCodeGen implements Generator<Object> {
             Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.LB, address);
         }
         else if (expr.ref.decl.getClass().equals(new VarDecl(null, null, null).getClass())) {            
-            address = ((KnownAddress)expr.ref.decl.entity).displacement;            
+            address = ((KnownAddress)expr.ref.decl.entity).displacement;                        
             Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.LB, address);
         }
         return null;
@@ -600,7 +685,7 @@ public class ASTCodeGen implements Generator<Object> {
         //fetch address of reference from runtime entity
         int address = ((KnownAddress)ie.ref.decl.entity).displacement;
         //load value at address onto the stack
-        Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.LB, address);
+        Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.HB, address);
         //load value of index expression onto the stack
         ie.ixExpr.generate(this);
         //add to get proper address
@@ -663,7 +748,6 @@ public class ASTCodeGen implements Generator<Object> {
             //create instruction for call to new array
             Machine.emit(Machine.Prim.newarr);            
         }
-        
         return null;
     }
 
@@ -697,7 +781,7 @@ public class ASTCodeGen implements Generator<Object> {
     	return ref.decl;
     }
     
-    public Object visitIdRef(IdRef ref) {
+    public Object visitIdRef(IdRef ref) {        
     	ref.id.generate(this);
     	return ref.decl;
     }
@@ -706,6 +790,19 @@ public class ASTCodeGen implements Generator<Object> {
         qr.id.generate(this);
         qr.ref.generate(this);
         int address;
+        //special case for .length of array
+        if (qr.ref.getClass().equals(new IdRef(null, null).getClass())) {
+            if (((IdRef)qr.ref).id.spelling == "length" && qr.id.decl.type.getClass().equals(new ArrayType(null, null).getClass())) {
+                System.out.println("999999999");
+                //get address of array
+                address = ((KnownAddress)qr.id.decl.entity).displacement;
+                //load length of array onto stack
+                Machine.emit(Machine.Op.LOADA, 1, Machine.Reg.HB, address);
+                //load array size onto stack
+                Machine.emit(Machine.Prim.arraylen);
+                return null;
+            }
+        }                
         if (qr.id.decl.getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass())) {
             address = ((FieldRep)qr.id.decl.entity).offsetFromSB;            
             Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.LB, address);
@@ -762,6 +859,8 @@ public class ASTCodeGen implements Generator<Object> {
                 return Machine.Prim.div;
             case "!":
                 return Machine.Prim.not;
+            case "!=":
+                return Machine.Prim.ne;
             default:
                 return null;
         }        
