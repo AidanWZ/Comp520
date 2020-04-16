@@ -27,8 +27,8 @@ public class BlockStmt extends Statement
         v.visitBlockStmt(this);
     }
 
-    public <R> void generate(Generator<R> generator) {
-        generator.visitBlockStmt(this);
+    public <R> Object generate(Generator<R> generator) {
+        return generator.visitBlockStmt(this);
     }
    
     public StatementList sl;

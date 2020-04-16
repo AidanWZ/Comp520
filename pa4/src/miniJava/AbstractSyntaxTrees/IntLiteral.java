@@ -26,7 +26,7 @@ public class IntLiteral extends Terminal {
     v.visitIntLiteral(this);
   }
 
-  public <R> void generate(Generator<R> generator) {
-    generator.visitIntLiteral(this);
+  public <R> Object generate(Generator<R> generator) {
+    return generator.visitIntLiteral(this);
   }
 }

@@ -22,4 +22,5 @@ abstract public class MemberDecl extends Declaration {
     }
     public boolean isPrivate;
     public boolean isStatic;
+    public String className;
 }

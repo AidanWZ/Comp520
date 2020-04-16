@@ -18,6 +18,8 @@ import java.util.Scanner;
 
 public class Interpreter {
 
+	static int instCounter = 0;
+
 	// DATA STORE
 	static int[] data = new int[1024];
 
@@ -512,7 +514,7 @@ public class Interpreter {
 		}
 	}
 
-	static void interpretOneOperation() {
+	static void interpretOneOperation() {		
 		// Fetch instruction ...
 		Instruction currentInstr = Machine.code[CP];
 		// Decode instruction ...
@@ -688,6 +690,7 @@ public class Interpreter {
 			debuggerStatus = DebuggerStatus.PAUSED;
 			System.out.println("Breakpoint hit: " + sourceLines.get(CP));
 		}
+		instCounter++;
 	}
 
 	static void initMachine() {
@@ -704,9 +707,16 @@ public class Interpreter {
 	static void interpretProgram() {
 		// Runs the program in code store.
 		initMachine();
-		do {
+		try {
+			do {
 			interpretOneOperation();
-		} while (status == running);
+			} while (status == running);
+		}
+		catch (Exception e) {
+			System.out.println("Exception occurred at intruction " + instCounter);
+			throw e;
+		}
+		
 	}
 
 	static void runProgramFromStart() {

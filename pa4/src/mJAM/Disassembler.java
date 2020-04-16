@@ -237,11 +237,12 @@ public class Disassembler {
 			asmWrite(String.format("%3d  ", addr));
 
 			// if this addr is a branch target, output label
-			if (addrToLabel.containsKey(addr))
+			if (addrToLabel.containsKey(addr)) {
 				asmWrite(String.format("%-7s", addrToLabel.get(addr) + ":"));
-			else
+			}
+			else {
 				asmWrite("       ");
-
+			}
 			// instruction
 			writeInstruction(Machine.code[addr]);
 

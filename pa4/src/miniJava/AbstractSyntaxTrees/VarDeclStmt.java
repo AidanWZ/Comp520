@@ -27,8 +27,8 @@ public class VarDeclStmt extends Statement {
         v.visitVardeclStmt(this);
     }
 
-    public <R> void generate(Generator<R> generator) {
-        generator.visitVardeclStmt(this);
+    public <R> Object generate(Generator<R> generator) {
+        return generator.visitVardeclStmt(this);
     }
 
     public VarDecl varDecl;

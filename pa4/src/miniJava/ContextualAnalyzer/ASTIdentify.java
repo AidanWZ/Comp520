@@ -42,7 +42,6 @@ import miniJava.AbstractSyntaxTrees.MethodDeclList;
 import miniJava.AbstractSyntaxTrees.NewArrayExpr;
 import miniJava.AbstractSyntaxTrees.NewObjectExpr;
 import miniJava.AbstractSyntaxTrees.NewStringExpr;
-import miniJava.AbstractSyntaxTrees.NewObjectExpr;
 import miniJava.AbstractSyntaxTrees.NullExpr;
 import miniJava.AbstractSyntaxTrees.NullLiteral;
 import miniJava.AbstractSyntaxTrees.Operator;
@@ -64,6 +63,8 @@ import miniJava.AbstractSyntaxTrees.UnaryExpr;
 import miniJava.AbstractSyntaxTrees.VarDecl;
 import miniJava.AbstractSyntaxTrees.VarDeclStmt;
 import miniJava.AbstractSyntaxTrees.WhileStmt;
+import miniJava.CodeGenerator.FieldRep;
+import miniJava.CodeGenerator.MethodRep;
 import miniJava.SyntacticAnalyzer.SourcePosition;
 import miniJava.SyntacticAnalyzer.Token;
 
@@ -82,35 +83,35 @@ import miniJava.SyntacticAnalyzer.Token;
  */
 public class ASTIdentify implements Traveller<Object> {
 
-    public Stack<HashMap<Object, Declaration>> scopeIdentificationTable;
-    public ArrayList<Stack<HashMap<Object, Declaration>>> allMembers;
+    public Stack<HashMap<String, Declaration>> scopeIdentificationTable;
+    public ArrayList<Stack<HashMap<String, Declaration>>> allMembers;
     public AST ast;
     public ASTDisplay astDisplay;
     public int iteratorIndex;
     public ErrorReporter idReporter;
     public ErrorReporter typeReporter;
 
-    public Object className;
-    public Object methodName;
+    public String className;
+    public String methodName;
     public TypeDenoter returnKind;
-    public Object referenceName;
+    public String referenceName;
     public boolean methodStatic;
     public boolean staticRef;
-    public List<Object> classNames;
-    public List<Object> parameterNames;
+    public List<String> classNames;
+    public List<String> parameterNames;
 
     public ASTIdentify(ErrorReporter idReporter, ErrorReporter typeReporter, AST ast) throws IdentificationError {
-        this.scopeIdentificationTable = new Stack<HashMap<Object, Declaration>>();
+        this.scopeIdentificationTable = new Stack<HashMap<String, Declaration>>();
         this.ast = ast;
         this.astDisplay = new ASTDisplay();
-        this.allMembers = new ArrayList<Stack<HashMap<Object, Declaration>>>();
+        this.allMembers = new ArrayList<Stack<HashMap<String, Declaration>>>();
         this.idReporter = idReporter;
         this.typeReporter = typeReporter;
         this.iteratorIndex = -1;
-        this.parameterNames = new ArrayList<Object>();
-        this.classNames = new ArrayList<Object>();
+        this.parameterNames = new ArrayList<String>();
+        this.classNames = new ArrayList<String>();
 
-        HashMap<Object, Declaration> temp = new HashMap<Object, Declaration>();
+        HashMap<String, Declaration> temp = new HashMap<String, Declaration>();
 
         FieldDeclList tempFieldsList;
         MethodDeclList tempMethodsList;
@@ -141,12 +142,12 @@ public class ASTIdentify implements Traveller<Object> {
                 new ClassDecl("_PrintStream", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
         ((Package)ast).classDeclList.add(new ClassDecl("_PrintStream", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
 
-        // adding Object class
+        // adding String class
         tempFieldsList = new FieldDeclList();
         tempMethodsList = new MethodDeclList();
         tempParameterList = new ParameterDeclList();
-        temp.put("Object", new ClassDecl("Object", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
-        ((Package)ast).classDeclList.add(new ClassDecl("Object", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
+        temp.put("String", new ClassDecl("String", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
+        ((Package)ast).classDeclList.add(new ClassDecl("String", tempFieldsList, tempMethodsList, new SourcePosition(0, 0)));
 
         // creating top level scope
         addScope();
@@ -154,24 +155,24 @@ public class ASTIdentify implements Traveller<Object> {
         //loading file classes and members + default classes
         loadClassMembers();
         //displayAllMembers();
-        //checkForMain();
+        checkForMain();
     }
 
     public void loadClassMembers() {
         //loads classes and members before starting main traveral
         int index = 0;
         for (ClassDecl c: ((Package) this.ast).classDeclList) {
-            allMembers.add(new Stack<HashMap<Object, Declaration>>());
-            allMembers.get(index).push(new HashMap<Object, Declaration>());
+            allMembers.add(new Stack<HashMap<String, Declaration>>());
+            allMembers.get(index).push(new HashMap<String, Declaration>());
             allMembers.get(index).peek().put(c.name, c);
-            allMembers.get(index).push(new HashMap<Object, Declaration>());
+            allMembers.get(index).push(new HashMap<String, Declaration>());
             for (FieldDecl f: c.fieldDeclList) { 
                 allMembers.get(index).peek().put(f.name, f);                
             }
             for (MethodDecl m: c.methodDeclList) { 
                 allMembers.get(index).peek().put(m.name, m); 
                 if (m.parameterDeclList.size() > 0) {
-                    allMembers.get(index).push(new HashMap<Object, Declaration>());
+                    allMembers.get(index).push(new HashMap<String, Declaration>());
                     for (ParameterDecl p : m.parameterDeclList) {
                         allMembers.get(index).peek().put(p.name, p);
                     }
@@ -183,11 +184,11 @@ public class ASTIdentify implements Traveller<Object> {
 
     public void checkForMain() throws IdentificationError {
         ArrayList<Declaration> mainMethods = new ArrayList<Declaration>();
-        for (Stack<HashMap<Object, Declaration>> clas: allMembers) {
-            Iterator<HashMap<Object, Declaration>> scopeIterator = clas.iterator();
+        for (Stack<HashMap<String, Declaration>> clas: allMembers) {
+            Iterator<HashMap<String, Declaration>> scopeIterator = clas.iterator();
             //for each scope in the stack
             while(scopeIterator.hasNext()) {
-                Iterator<Map.Entry<Object, Declaration>> memberIterator = scopeIterator.next().entrySet().iterator();
+                Iterator<Map.Entry<String, Declaration>> memberIterator = scopeIterator.next().entrySet().iterator();
                 //for each element in the scope
                 while (memberIterator.hasNext()) {                    
                     Declaration candidate = memberIterator.next().getValue();
@@ -216,15 +217,6 @@ public class ASTIdentify implements Traveller<Object> {
         }                
     }
 
-    public boolean isSameType(TypeDenoter type1, TypeDenoter type2) {
-        if (type1.getClass().equals(type2.getClass())) {
-            if (isSameTypeKind(type1.typeKind, type2.typeKind)) {
-                return true;
-            }
-        }
-        return false;        
-    }
-
     public boolean isSameTypeKind(TypeKind type1, TypeKind type2) {
         if (type1.equals(type2)) {
             if (type1.equals(TypeKind.UNSUPPORTED) || type2.equals(TypeKind.UNSUPPORTED)) {
@@ -249,22 +241,18 @@ public class ASTIdentify implements Traveller<Object> {
         }
     }
 
-    public boolean isSameExprType(Expression expr1, Expression expr2) {
-        return expr1.getClass().equals(expr2.getClass());
-    }
-
     public void displayAST() {
         astDisplay.showTree(this.ast);
     }
 
     public void displayIdTable() {        
-        Iterator<HashMap<Object, Declaration>> scopeIterator = scopeIdentificationTable.iterator();
+        Iterator<HashMap<String, Declaration>> scopeIterator = scopeIdentificationTable.iterator();
         int level = 0;
         System.out.println("================ScopedIdTable=================");
         boolean first = true;
         while (scopeIterator.hasNext()) {
             System.out.println("------------Level: "+ level + "-------------");
-            for (Map.Entry<Object, Declaration> mapElement : scopeIterator.next().entrySet()) {
+            for (Map.Entry<String, Declaration> mapElement : scopeIterator.next().entrySet()) {
                 if (mapElement.getValue().type == null) {
                     if (first) {
                         System.out.println(mapElement.getKey() + " : " + "class");
@@ -287,14 +275,14 @@ public class ASTIdentify implements Traveller<Object> {
 
     private void displayAllMembers() {
         //for each stack/class in the file list
-        for (Stack<HashMap<Object, Declaration>> clas: allMembers) {
+        for (Stack<HashMap<String, Declaration>> clas: allMembers) {
             System.out.println("-----------------Class-------------");
-            Iterator<HashMap<Object, Declaration>> scopeIterator = clas.iterator();
+            Iterator<HashMap<String, Declaration>> scopeIterator = clas.iterator();
             //for each scope in the stack
             int counter = 0;
             while(scopeIterator.hasNext()) {
                 System.out.println("**********Level " + counter);
-                Iterator<Map.Entry<Object, Declaration>> memberIterator = scopeIterator.next().entrySet().iterator();
+                Iterator<Map.Entry<String, Declaration>> memberIterator = scopeIterator.next().entrySet().iterator();
                 //for each element in the scope
                 while (memberIterator.hasNext()) {                    
                     Declaration current = memberIterator.next().getValue();
@@ -306,7 +294,7 @@ public class ASTIdentify implements Traveller<Object> {
         System.out.println("----------------------------------------");
     }
 
-    public Declaration search(Object name) {        
+    public Declaration search(String name) {        
         int tempIndex = iteratorIndex;        
         while (tempIndex >= 0) {
             if (scopeIdentificationTable.elementAt(tempIndex).containsKey(name)) {
@@ -317,7 +305,7 @@ public class ASTIdentify implements Traveller<Object> {
         return null;
     }
 
-    public Declaration searchAbove(Object name) {
+    public Declaration searchAbove(String name) {
         int tempIndex = iteratorIndex - 1;
         while (tempIndex >= 0) {
             if (scopeIdentificationTable.elementAt(tempIndex).containsKey(name)) {
@@ -328,16 +316,16 @@ public class ASTIdentify implements Traveller<Object> {
         return null;
     }
 
-    public Declaration searchAllMembers(Object memberName) {
+    public Declaration searchAllMembers(String memberName) {
         if (search(memberName) != null) {
             return search(memberName);
         }
         // for each class
-        for (Stack<HashMap<Object, Declaration>> clas: allMembers) {
-            Iterator<HashMap<Object, Declaration>> scopeIterator = clas.iterator();
+        for (Stack<HashMap<String, Declaration>> clas: allMembers) {
+            Iterator<HashMap<String, Declaration>> scopeIterator = clas.iterator();
             //for each scope in the stack
             while(scopeIterator.hasNext()) {
-                Iterator<Map.Entry<Object, Declaration>> memberIterator = scopeIterator.next().entrySet().iterator();
+                Iterator<Map.Entry<String, Declaration>> memberIterator = scopeIterator.next().entrySet().iterator();
                 //for each element in the scope
                 while (memberIterator.hasNext()) {                    
                     Declaration current = memberIterator.next().getValue();
@@ -350,55 +338,9 @@ public class ASTIdentify implements Traveller<Object> {
         return null;
     }
 
-    public FieldDeclList findFields(Object classname) {
-        ClassDecl decl = (ClassDecl) search(classname);
-        return decl.fieldDeclList;
-    }
-
-    public MethodDeclList findMethods(Object classname) {
-        ClassDecl decl = (ClassDecl) search(classname);
-        return decl.methodDeclList;
-    }
-
-    public MemberDecl findSpecifiedMember(Object className, Object memberName) {
-        FieldDeclList fields = findFields(className);
-        MethodDeclList methods = findMethods(className);
-        for (FieldDecl f: fields) {
-            if (f.name.equals(memberName)) {
-                return f;
-            }
-        }
-        for (MethodDecl m: methods) {
-            if (m.name.equals(memberName)) {
-                return m;
-            }
-        }
-        return null;
-    }
-
-    public FieldDecl findField(Object fieldName) {
-        ClassDecl decl = (ClassDecl) search(this.className);
-        for (FieldDecl f: decl.fieldDeclList) {
-            if (f.name.equals(fieldName)) {
-                return f;
-            }
-        }
-        return null;
-    }
-
-    public MethodDecl findMethod(Object methodName) {
-        ClassDecl decl = (ClassDecl) search(this.className);
-        for (MethodDecl m: decl.methodDeclList) {
-            if (m.name.equals(methodName)) {
-                return m;
-            }
-        }
-        return null;
-    }
-
-    public MemberDecl findMember(Object memberName) {
-        MethodDeclList classMethods = findMethods(this.className);
-        FieldDeclList classFields = findFields(this.className);
+    public MemberDecl findMember(String memberName) {
+        MethodDeclList classMethods = ((ClassDecl) search(this.className)).methodDeclList;
+        FieldDeclList classFields = ((ClassDecl) search(this.className)).fieldDeclList;
         for(MethodDecl m: classMethods) {
             if (m.name.equals(memberName)) {
                 return m;
@@ -413,7 +355,7 @@ public class ASTIdentify implements Traveller<Object> {
     }
 
     public void addScope() {
-        scopeIdentificationTable.push(new HashMap<Object, Declaration>());
+        scopeIdentificationTable.push(new HashMap<String, Declaration>());
         iteratorIndex++;
     }
 
@@ -434,7 +376,7 @@ public class ASTIdentify implements Traveller<Object> {
 		throw(new TypeError());	
     }
 
-    void display(Object text) {
+    void display(String text) {
 		System.out.println(text);
 	}
     
@@ -467,14 +409,15 @@ public class ASTIdentify implements Traveller<Object> {
             scopeIdentificationTable.peek().put(f.name, f);     
             f.visit(this);            
         }
-        staticRef = false;
+        staticRef = false;        
         for (MethodDecl m: clas.methodDeclList) {
             if (search(m.name) != null) {
                 identificationError(m.posn.start, "visitClassDecl", "Duplicate member declaration with identifier " + m.name + " in class " + className);
             }  
             returnKind = m.type;  
             methodStatic = m.isStatic;
-            methodName = m.name;                     
+            methodName = m.name;
+            m.className = this.className;                     
             m.visit(this);
             scopeIdentificationTable.peek().put(m.name, m);
         }
@@ -685,6 +628,13 @@ public class ASTIdentify implements Traveller<Object> {
         stmt.ref.visit(this);
         stmt.val.visit(this);        
         if (stmt.ref.getClass().equals(new QualRef(null, null, null).getClass())) { 
+            //cannot assign to length field
+            if (((QualRef)stmt.ref).ref.getClass().equals(new IdRef(null, null).getClass())) {
+                if (((IdRef)((QualRef)stmt.ref).ref).id.spelling.equals("length")
+                && ((QualRef)stmt.ref).id.decl.type.getClass().equals(new ArrayType(null, null).getClass())) {
+                    typeError(stmt.posn.start, "visitAssignStmt", "Cannot asgn value to length field of an array");
+                }
+            }
             //if the reference is a this reference
             if (((QualRef)stmt.ref).ref.getClass().equals(new ThisRef(new SourcePosition()).getClass())) {                            
                 if (search(((QualRef)stmt.ref).id.spelling) == null) {            
@@ -774,7 +724,6 @@ public class ASTIdentify implements Traveller<Object> {
         stmt.ref.visit(this);
         stmt.ix.visit(this);
         stmt.exp.visit(this);
-        
         if (isSameTypeKind(stmt.ref.decl.type.typeKind, TypeKind.ARRAY) && // ref type must be array type
             isSameTypeKind(stmt.ix.type, TypeKind.INT) &&                  // index must be int type
             isSameTypeKind(((ArrayType)stmt.ref.decl.type).eltType.typeKind, stmt.exp.type)) {  // assignment type must equal reference type            
@@ -793,7 +742,8 @@ public class ASTIdentify implements Traveller<Object> {
             Reference temp = ((QualRef)stmt.methodRef).ref;
             while (temp.getClass().equals(new QualRef(null, null, null).getClass())) {
                 temp = ((QualRef)temp).ref;
-            }            
+            } 
+            stmt.methodRef = temp;           
             ExprList al = stmt.argList;
             int counter = 0;
             for (Expression e: al) { 
@@ -848,15 +798,15 @@ public class ASTIdentify implements Traveller<Object> {
                 counter++;
             }
             //check for static violation                
-            if (!((MemberDecl) search(stmt.methodRef.decl.name)).isStatic && methodStatic) {
+            if (!((MemberDecl) searchAllMembers(stmt.methodRef.decl.name)).isStatic && methodStatic) {
                 if (methodStatic) {
                     identificationError(stmt.posn.start, "visitCallStmt", "Cannot reference non-static symbol " + stmt.methodRef.decl.name + " in static context");
                 }
-                else if (!((MemberDecl) search(stmt.methodRef.decl.name)).isStatic) {
+                else if (!((MemberDecl) searchAllMembers(stmt.methodRef.decl.name)).isStatic) {
                     identificationError(stmt.posn.start, "visitCallStmt", "Non static reference to static member");
                 }
             } 
-        }                
+        }             
         return null;
     }
     
@@ -956,22 +906,17 @@ public class ASTIdentify implements Traveller<Object> {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
-    public Object visitUnaryExpr(UnaryExpr expr) throws TypeError, IdentificationError {
-        if (expr.operator.spelling.equals("!") && isSameTypeKind(expr.expr.type, TypeKind.BOOLEAN)) {
-            expr.operator.visit(this);
-            expr.expr.visit(this);
+    public Object visitUnaryExpr(UnaryExpr expr) throws TypeError, IdentificationError {        
+        expr.operator.visit(this);
+        expr.expr.visit(this);
+        if (expr.operator.spelling.equals("!") && isSameTypeKind(expr.expr.type, TypeKind.BOOLEAN)) {                        
             expr.type = expr.expr.type;
         } 
-        else {
-            typeError(expr.posn.start, "visitUnaryExpr", "The operator ! is undefined for the argument type(s) " + expr.expr.type);
-        }
-        if (expr.operator.spelling.equals("-") && isSameTypeKind(expr.expr.type, TypeKind.INT)) {
-            expr.operator.visit(this);
-            expr.expr.visit(this);
+        else if (expr.operator.spelling.equals("-") && isSameTypeKind(expr.expr.type, TypeKind.INT)) {
             expr.type = expr.expr.type;
         }  
         else {
-            typeError(expr.posn.start, "visitUnaryExpr", "The operator - is undefined for the argument type(s) " + expr.expr.type);
+            typeError(expr.posn.start, "visitUnaryExpr", "The operator " + expr.operator.spelling + " is undefined for the argument type(s) " + expr.expr.type);
         }
         return null;
     }
@@ -979,7 +924,7 @@ public class ASTIdentify implements Traveller<Object> {
     public Object visitBinaryExpr(BinaryExpr expr) throws TypeError, IdentificationError {
         expr.operator.visit(this);
         expr.left.visit(this);
-        expr.right.visit(this);
+        expr.right.visit(this);        
         //if comparing two class types
         if (isSameTypeKind(expr.left.type, TypeKind.CLASS) && isSameTypeKind(expr.right.type, TypeKind.CLASS)) {
             if (expr.left.getClass().equals(new NewObjectExpr(null, null).getClass()) &&
@@ -1133,6 +1078,18 @@ public class ASTIdentify implements Traveller<Object> {
     
     public Object visitRefExpr(RefExpr expr) throws TypeError, IdentificationError {
         expr.ref.visit(this);
+        //length special case
+        if (expr.ref.getClass().equals(new QualRef(null, null, null).getClass())) {
+            Reference ref = expr.ref;            
+            while (ref.getClass().equals(new QualRef(null, null, null).getClass())) {
+                ref = ((QualRef)ref).ref; 
+            } 
+            if (((IdRef)ref).id.spelling.equals("length")) {                
+                expr.type = TypeKind.INT;
+                expr.ref.decl = new FieldDecl(false, true, new BaseType(TypeKind.INT, new SourcePosition(0, 0)), "length", new SourcePosition(0, 0));
+                return null;
+            }
+        }
         //if the reference is a qualified reference
         if (expr.ref.getClass().equals(new QualRef(null, null, null).getClass())) {                       
             if (searchAllMembers(((QualRef)expr.ref).id.spelling) != null) {                                 
@@ -1198,28 +1155,13 @@ public class ASTIdentify implements Traveller<Object> {
     public Object visitIxExpr(IxExpr ie) throws TypeError, IdentificationError {
         ie.ref.visit(this);
         ie.ixExpr.visit(this);
-        //if the reference was a variable
-        // if (ie.ref.decl.getClass().equals(new VarDecl(null, null, null).getClass())) {
-        //     //if the reference variable is a not an array type
-        //     System.out.println(((VarDecl)((IdRef)ie.ref).decl).type.typeKind);
-        //     if (!isSameTypeKind(search(((IdRef)ie.ref).id.spelling).type.typeKind, TypeKind.ARRAY)) {
-        //         typeError(ie.posn.start, "visitIxExpr", "The type of the expression must be an ARRAY type but it resolved to " + search(((VarDecl)ie.ref.decl).name).type.typeKind);
-        //     }
-        // }
-        // // if the reference is a field
-        // else if (ie.ref.decl.getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass())) {
-        //     // if the reference field is not an array type
-        //     if (!isSameTypeKind(search(((FieldDecl)ie.ref.decl).name).type.typeKind, TypeKind.ARRAY)) {
-        //         typeError(ie.posn.start, "visitIxExpr", "The type of the expression must be an ARRAY type but it resolved to " + search(((FieldDecl)ie.ref.decl).name).type.typeKind);
-        //     }
-        // }
         if (isSameTypeKind(ie.ixExpr.type, TypeKind.INT)) { 
             if (ie.ref.decl.type.getClass().equals(new ClassType(null, null).getClass())) {
                 ie.type = ((ClassType)ie.ref.decl.type).typeKind;
             }    
             else if (ie.ref.decl.type.getClass().equals(new ArrayType(null, null).getClass())) {
                 ie.type = ((ArrayType)ie.ref.decl.type).eltType.typeKind;
-            }              
+            }                        
         }
         else {
             if (!isSameTypeKind(ie.ixExpr.type, TypeKind.INT)) {
@@ -1248,7 +1190,6 @@ public class ASTIdentify implements Traveller<Object> {
             if (!(previousRef.decl.getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass()) ||
                 previousRef.decl.getClass().equals(new ClassDecl(null, null, null, null).getClass()) ||
                 previousRef.decl.getClass().equals(new MethodDecl(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)), new ParameterDeclList(), new StatementList(), new SourcePosition(0, 0)).getClass()))) {
-                    System.out.println( previousRef.decl.getClass());
                 if (ref.getClass().equals(new QualRef(null, null, null).getClass())) {
                     identificationError(expr.posn.start, "visitCallExpr", ((QualRef) ref).id.spelling + " cannot be resolved or is not a field");
                 }
@@ -1337,7 +1278,12 @@ public class ASTIdentify implements Traveller<Object> {
     }
     
     public Object visitIdRef(IdRef ref) throws TypeError, IdentificationError {        
-        ref.id.visit(this);           
+        ref.id.visit(this); 
+        //length special case
+        if (ref.id.spelling.equals("length")) {
+            ref.decl = new FieldDecl(false, true, new BaseType(TypeKind.INT, new SourcePosition(0, 0)), "length", new SourcePosition(0, 0));
+            return null;
+        }       
         // if identifier is a defined within the current class
         if (search(ref.id.spelling) != null) {            
             // if the member is a local variable
@@ -1370,13 +1316,21 @@ public class ASTIdentify implements Traveller<Object> {
     }
         
     public Object visitQRef(QualRef qr) throws TypeError, IdentificationError { 
+        //is a static reference?
         if (qr.ref.getClass().equals(new QualRef(null, null, null).getClass())) {
             if (((MemberDecl)searchAllMembers(((QualRef)qr.ref).id.spelling)).isStatic) {
                 staticRef = true;
             }
         }                
         qr.id.visit(this);
-        qr.ref.visit(this);
+        qr.ref.visit(this);    
+        //length special case
+        if (qr.ref.getClass().equals(new IdRef(null, null).getClass())) {                       
+            if (((IdRef)qr.ref).id.spelling.equals("length") && qr.id.decl.type.getClass().equals(new ArrayType(null, null).getClass())) {
+                qr.ref.decl = new FieldDecl(false, true, new BaseType(TypeKind.INT, new SourcePosition(0, 0)), "length", new SourcePosition(0, 0));                 
+                return null;
+            }
+        }    
         Declaration temp = null;        
         //if the qref is a this reference        
         if (qr.ref.getClass().equals(new ThisRef(new SourcePosition()).getClass())) {  
@@ -1414,8 +1368,9 @@ public class ASTIdentify implements Traveller<Object> {
                 }  
                 ((IdRef)ref).visit(this);   
                 //primitive items can not have qualified references
-                if (!search(qr.id.spelling).type.getClass().equals(new ClassType(null, null).getClass())) {
-                    identificationError(ref.posn.start, "visitQRef", "The primitive type " + search(qr.id.spelling).type.typeKind + " of c does not have a field foo");
+                if (!search(qr.id.spelling).type.getClass().equals(new ClassType(null, null).getClass()) &&
+                    !search(qr.id.spelling).type.getClass().equals(new ArrayType(null, null).getClass())) {
+                    identificationError(ref.posn.start, "visitQRef", "The primitive type " + search(qr.id.spelling).type.typeKind + " of c does not have a field " + ((IdRef)qr.ref).id.spelling);
                 }                            
                 qr.decl = searchAllMembers(((IdRef)ref).id.spelling);         
             }   
@@ -1453,11 +1408,11 @@ public class ASTIdentify implements Traveller<Object> {
         }
         //if reference is member of another class
         else {             
-            Reference ref = qr.ref;            
+            Reference ref = qr.ref; 
+            Reference previousRef = qr;           
             while (ref.getClass().equals(new QualRef(null, null, null).getClass())) {                
                 ref.visit(this);
-                Reference previousRef = ref; 
-                
+                previousRef = ref;                 
                 if (!(previousRef.decl.getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass()) ||
                     previousRef.decl.getClass().equals(new ClassDecl(null, null, null, null).getClass()) ||
                     previousRef.decl.getClass().equals(new MethodDecl(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)), new ParameterDeclList(), new StatementList(), new SourcePosition(0, 0)).getClass()))) {                                                
@@ -1471,7 +1426,7 @@ public class ASTIdentify implements Traveller<Object> {
                 previousRef = ref;
                 ref = ((QualRef)ref).ref; 
             }             
-            ((IdRef)ref).visit(this);                             
+            ((IdRef)ref).visit(this);  
             if (((MemberDecl)searchAllMembers(((IdRef)ref).id.spelling)).isStatic  || staticRef) {
                 qr.decl = searchAllMembers(((IdRef)ref).id.spelling);
             }

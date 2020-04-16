@@ -29,8 +29,8 @@ public class BinaryExpr extends Expression
         v.visitBinaryExpr(this);
     }
 
-    public <R> void generate(Generator<R> generator) {
-        generator.visitBinaryExpr(this);
+    public <R> Object generate(Generator<R> generator) {
+        return generator.visitBinaryExpr(this);
     }
     
     public Operator operator;

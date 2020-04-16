@@ -26,7 +26,7 @@ public class NullLiteral extends Terminal {
     v.visitNullLiteral(this);
   }
 
-  public <R> void generate(Generator<R> generator) {
-    generator.visitNullLiteral(this);
+  public <R> Object generate(Generator<R> generator) {
+    return generator.visitNullLiteral(this);
   }
 }

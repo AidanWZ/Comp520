@@ -26,7 +26,7 @@ public class ThisRef extends BaseRef {
         v.visitThisRef(this);
     }
 	
-	public <R> void generate(Generator<R> generator) {
-        generator.visitThisRef(this);
+	public <R> Object generate(Generator<R> generator) {
+        return generator.visitThisRef(this);
     }
 }

@@ -1,19 +1,7 @@
-class Counter {
-    
-    public static void increase(int k) {
-        count = count + k;
-    }
-    public static void main(String [] args){
-        Counter counter = new Counter();
-        counter.increase(3);
-        System.out.println(counter.count);
-    }
-    public static int count;
-}
+class Test {
 
-// class Tester {
-//     public static void m1() {
-//         derp++;
-//     }
-//     public int derp;
-// }
+    public static void main(String [] args){
+        int[] i = new int[23];
+        i.length = 9;
+    }
+}

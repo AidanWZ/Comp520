@@ -26,7 +26,7 @@ public class Operator extends Terminal {
     v.visitOperator(this);
   }
 
-  public <R> void generate(Generator<R> generator) {
-    generator.visitOperator(this);
+  public <R> Object generate(Generator<R> generator) {
+    return generator.visitOperator(this);
   }
 }

@@ -32,7 +32,7 @@ public abstract class AST {
 
   public abstract <R> void visit(Traveller<R> v) throws TypeError, IdentificationError;
 
-  public abstract <R> void generate(Generator<R> v);
+  public abstract <R> Object generate(Generator<R> v);
 
   public SourcePosition posn;
 

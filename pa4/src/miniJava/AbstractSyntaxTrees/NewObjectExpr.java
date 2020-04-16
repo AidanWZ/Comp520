@@ -27,8 +27,8 @@ public class NewObjectExpr extends NewExpr
         v.visitNewObjectExpr(this);
     }
 
-    public <R> void generate(Generator<R> generator) {
-        generator.visitNewObjectExpr(this);
+    public <R> Object generate(Generator<R> generator) {
+        return generator.visitNewObjectExpr(this);
     }
     
     public ClassType classtype;

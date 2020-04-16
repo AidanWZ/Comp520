@@ -28,8 +28,8 @@ public class WhileStmt extends Statement
         v.visitWhileStmt(this);
     }
 
-    public <R> void generate(Generator<R> generator) {
-        generator.visitWhileStmt(this);
+    public <R> Object generate(Generator<R> generator) {
+        return generator.visitWhileStmt(this);
     }
 
     public Expression cond;

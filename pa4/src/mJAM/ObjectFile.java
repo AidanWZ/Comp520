@@ -31,6 +31,7 @@ public class ObjectFile {
 			DataOutputStream is = new DataOutputStream(objectFile);
 			for (int i = Machine.CB; i < Machine.CT; i++ ){
 				Instruction inst = Machine.code[i];
+				//Instruction inst = instList[i];
 				is.writeInt(inst.op);
 				is.writeInt(inst.n);
 				is.writeInt(inst.r);

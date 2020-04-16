@@ -5,6 +5,7 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.CodeGenerator.RuntimeEntity;
 import miniJava.SyntacticAnalyzer.SourcePosition;
 
 public abstract class Declaration extends AST {
@@ -18,8 +19,7 @@ public abstract class Declaration extends AST {
 	public String name;
 	public TypeDenoter type;
 	
-	public int size;
-	public int location;
+	public RuntimeEntity entity;
 
 	public String toString() {
 		return name;

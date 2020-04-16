@@ -27,8 +27,8 @@ public class Package extends AST {
 			v.visitPackage(this);
     }
     
-    public <R> void generate(Generator<R> generator) {
-      generator.visitPackage(this);
+    public <R> Object generate(Generator<R> generator) {
+      return generator.visitPackage(this);
     }
 
     public ClassDeclList classDeclList;

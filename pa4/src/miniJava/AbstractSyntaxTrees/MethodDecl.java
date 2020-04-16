@@ -28,8 +28,8 @@ public class MethodDecl extends MemberDecl {
         v.visitMethodDecl(this);
     }
 
-    public <R> void generate(Generator<R> generator) {
-        generator.visitMethodDecl(this);
+    public <R> Object generate(Generator<R> generator) {
+        return generator.visitMethodDecl(this);
     }
 	
 	public ParameterDeclList parameterDeclList;

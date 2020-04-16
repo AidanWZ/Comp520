@@ -28,8 +28,8 @@ public class AssignStmt extends Statement
         v.visitAssignStmt(this);
     }
 
-    public <R> void generate(Generator<R> generator) {
-        generator.visitAssignStmt(this);
+    public <R> Object generate(Generator<R> generator) {
+        return generator.visitAssignStmt(this);
     }
     
     public Reference ref;
