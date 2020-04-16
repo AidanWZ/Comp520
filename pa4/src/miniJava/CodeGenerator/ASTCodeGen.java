@@ -32,6 +32,7 @@ import miniJava.AbstractSyntaxTrees.Declaration;
 import miniJava.AbstractSyntaxTrees.Expression;
 import miniJava.AbstractSyntaxTrees.ExprList;
 import miniJava.AbstractSyntaxTrees.FieldDecl;
+import miniJava.AbstractSyntaxTrees.FieldDeclList;
 import miniJava.AbstractSyntaxTrees.IdRef;
 import miniJava.AbstractSyntaxTrees.Identifier;
 import miniJava.AbstractSyntaxTrees.IfStmt;
@@ -123,9 +124,9 @@ public class ASTCodeGen implements Generator<Object> {
         this.astDisplay = new ASTDisplay();
         this.parameterDisplacement = 0;
         this.declarationLevel = 0;
-        this.frameSpaceUsed = 0;
+        this.frameSpaceUsed = 3;
         this.stackSpaceUsed = 0;
-        this.heapSpaceUsed = -1;
+        this.heapSpaceUsed = -3;
         this.incompleteInstructions = new HashMap<String, Integer>();
     }
 
@@ -256,6 +257,16 @@ public class ASTCodeGen implements Generator<Object> {
             }
         }
     }
+
+    public short getClassSize(FieldDeclList fl) {
+        short counter = 0;
+        for (FieldDecl f: fl) {
+            if (!f.isStatic) {
+                counter++;
+            }
+        }
+        return counter;
+    }
     
     public void generate() {
         //init CB
@@ -303,7 +314,7 @@ public class ASTCodeGen implements Generator<Object> {
         int classOffset = 0;
         for (ClassDecl c: prog.classDeclList) {
             c.generate(this);
-            c.entity = new ClassRep(classOffset, c.fieldDeclList.size());
+            c.entity = new ClassRep(classOffset, getClassSize(c.fieldDeclList));
             classOffset+= c.fieldDeclList.size();
         }
         return null;
@@ -427,20 +438,18 @@ public class ASTCodeGen implements Generator<Object> {
     public Object visitVardeclStmt(VarDeclStmt stmt){
         //if the var declaration is an array
         if (stmt.varDecl.type.getClass().equals(new ArrayType(null, null).getClass())) {
-            //generate var decl entity
-            stmt.varDecl.entity = new KnownAddress(this.declarationLevel, this.heapSpaceUsed);
+            //save HT
+            int currentHT = this.heapSpaceUsed;
+            //generate var decl entity (address of array on heap)
+            stmt.varDecl.entity = new KnownAddress(this.declarationLevel, this.frameSpaceUsed);
             if (stmt.initExp != null) {
-                //load value of init expression onto the stack
+                //load value of init array expression onto the stack
                 stmt.initExp.generate(this);
-                //load address of heap top onto the stack
-                Machine.emit(Machine.Op.LOADA, 1, Machine.Reg.HT, 0);
-                //save value to top of heap
-                Machine.emit(Machine.Op.STOREI, 1, Machine.Reg.HB, this.heapSpaceUsed);                                                        
             } 
-            //create runtime entity for variable   
-            stmt.varDecl.generate(this);    
-            int displacement = ((KnownAddress)stmt.varDecl.entity).displacement;
-            this.heapSpaceUsed -= displacement;
+            //does nothing  
+            stmt.varDecl.generate(this);   
+            //used up a frame space increment             
+            this.frameSpaceUsed++;
         } 
         //if the variable is a base or class type
         else {
@@ -485,21 +494,42 @@ public class ASTCodeGen implements Generator<Object> {
     }
     
     public Object visitIxAssignStmt(IxAssignStmt stmt){
-        //generate reference (does nothing)
-        stmt.ref.generate(this);
-        //fetch address of variable relative to LB
-        int varAddress = ((KnownAddress)stmt.ref.decl.entity).displacement;
-        //push array address onto the stack
-        Machine.emit(Machine.Op.LOADA, 1, Machine.Reg.HB, varAddress);                
-        //push value of expression onto the stack
-        stmt.exp.generate(this);        
-        //push value of index expression onto the stack
-        stmt.ix.generate(this);
-        //add addres and offset to get new address
-        Machine.emit(Machine.Prim.add);
-        //store expression value at new offset address 
-        Machine.emit(Machine.Op.STOREI, 1, Machine.Reg.HB, 0);
-        return null;
+        //if the array is an array of objects 
+        if (isSameTypeKind(((VarDecl)stmt.ref.decl).type.typeKind, TypeKind.CLASS)) {
+            //generate reference (does nothing)
+            stmt.ref.generate(this);
+            //fetch address of variable relative to HB
+            int varAddress = ((KnownAddress)stmt.ref.decl.entity).displacement;
+            //get classSize
+            int classSize = ((ClassDecl)((ClassType)stmt.ref.decl.type).className.decl).entity.size;
+            //push array address onto the stack
+            Machine.emit(Machine.Op.LOADA, 1, Machine.Reg.HB, varAddress*classSize);                
+            //push value of expression onto the stack
+            stmt.exp.generate(this);        
+            //push value of index expression onto the stack
+            stmt.ix.generate(this);
+            //add addres and offset to get new address
+            Machine.emit(Machine.Prim.add);
+            //store expression value at new offset address 
+            Machine.emit(Machine.Op.STOREI, 1, Machine.Reg.HB, 0); 
+        }
+        else {
+            //generate reference (does nothing)
+            stmt.ref.generate(this);
+            //fetch address of variable relative to HB
+            int varAddress = ((KnownAddress)stmt.ref.decl.entity).displacement;                           
+            //push value of expression onto the stack
+            stmt.exp.generate(this);        
+            //push value of index expression onto the stack
+            stmt.ix.generate(this);
+            //push array address onto the stack
+            Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.LB, varAddress+3);
+            //add address and offset to get new address
+            Machine.emit(Machine.Prim.add);             
+            //store expression value at new offset address 
+            Machine.emit(Machine.Op.STOREI, 1, Machine.Reg.HB, 0);            
+        }   
+        return null;     
     }
         
     public Object visitCallStmt(CallStmt stmt){
@@ -592,6 +622,8 @@ public class ASTCodeGen implements Generator<Object> {
     }
     
     public Object visitWhileStmt(WhileStmt stmt){
+        //save address of cuurent framespace
+        short currentFrame = this.frameSpaceUsed;
         //address of conditional
         int condAddress = Machine.nextInstrAddr();
         //generate instruction for conditional
@@ -606,6 +638,8 @@ public class ASTCodeGen implements Generator<Object> {
         int endOfLoopAddress = Machine.nextInstrAddr();        
         // jump back to conditional
         Machine.emit(Machine.Op.JUMP, Machine.Reg.CB, condAddress);
+        //restore old frame (old data will be overriden)
+        this.frameSpaceUsed = currentFrame;
         //patch jump instruction after conditional with end of loop
         Machine.patch(jumpEndAddress, endOfLoopAddress+1);                        
         return null;
@@ -679,19 +713,112 @@ public class ASTCodeGen implements Generator<Object> {
         return null;
     }
     
-    public Object visitIxExpr(IxExpr ie){
-        //generate reference (does nothing)
-        ie.ref.generate(this);
-        //fetch address of reference from runtime entity
-        int address = ((KnownAddress)ie.ref.decl.entity).displacement;
-        //load value at address onto the stack
-        Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.HB, address);
-        //load value of index expression onto the stack
-        ie.ixExpr.generate(this);
-        //add to get proper address
-        Machine.emit(Machine.Prim.add);
-        //push value held at new address onto the stack
-        Machine.emit(Machine.Op.LOADI);
+    public Object visitIxExpr(IxExpr ie){        
+        //if the reference is a field        
+        if (ie.ref.decl.getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass())) {
+            //if the array is of class types
+            if (isSameTypeKind(((FieldDecl)ie.ref.decl).type.typeKind, TypeKind.CLASS)) {
+                //generate reference (does nothing)
+                ie.ref.generate(this);
+                //get size of each class object
+                int classSize = ((ClassRep)((ClassDecl)((ClassType)((FieldDecl)ie.ref.decl).type).className.decl).entity).size;
+                //fetch address of reference from runtime entity
+                int address = ((KnownAddress)ie.ref.decl.entity).displacement;
+                //load value at address onto the stack
+                Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.LB, address + 3);
+                //load value of index expression onto the stack
+                ie.ixExpr.generate(this);
+                //multiply index by clasSize
+                Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.ST, classSize);
+                Machine.emit(Machine.Prim.mult);
+                //add to get proper address
+                Machine.emit(Machine.Prim.add);
+                //push value held at new address onto the stack
+                Machine.emit(Machine.Op.LOADI);
+            }
+            else {
+                //generate reference (does nothing)
+                ie.ref.generate(this);
+                //fetch address of reference from runtime entity
+                int address = ((KnownAddress)ie.ref.decl.entity).displacement;
+                //load address of array onto the stack
+                Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.LB, address+3);
+                //load value of index expression onto the stack
+                ie.ixExpr.generate(this);
+                //add to get proper address
+                Machine.emit(Machine.Prim.add);
+                //push value held at new address onto the stack
+                Machine.emit(Machine.Op.LOADI);
+            }
+        }
+        //if the reference is a parameter
+        else if (ie.ref.decl.getClass().equals(new ParameterDecl(null, null, null).getClass())) {
+            //if the array is of class types
+            if (isSameTypeKind(((ParameterDecl)ie.ref.decl).type.typeKind, TypeKind.CLASS)) {
+                //generate reference (does nothing)
+                ie.ref.generate(this);
+                //get size of each class object
+                int classSize = ((ClassRep)((ClassDecl)((ClassType)((ParameterDecl)ie.ref.decl).type).className.decl).entity).size;
+                //fetch address of reference from runtime entity
+                int address = ((KnownAddress)ie.ref.decl.entity).displacement*classSize;
+                //load address of array onto the stack
+                Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.LB, address+3);
+                //load value of index expression onto the stack
+                ie.ixExpr.generate(this);
+                //add to get proper address
+                Machine.emit(Machine.Prim.add);
+                //push value held at new address onto the stack
+                Machine.emit(Machine.Op.LOADI);
+            }
+            else {
+                //generate reference (does nothing)
+                ie.ref.generate(this);
+                //fetch address of reference from runtime entity
+                int address = ((KnownAddress)ie.ref.decl.entity).displacement;
+                //load address of array onto the stack
+                Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.LB, address+3);
+                //load value of index expression onto the stack
+                ie.ixExpr.generate(this);
+                //add to get proper address
+                Machine.emit(Machine.Prim.add);
+                //push value held at new address onto the stack
+                Machine.emit(Machine.Op.LOADI);
+            }
+        }
+        //if the reference is a variable
+        else if (ie.ref.decl.getClass().equals(new VarDecl(null, null, null).getClass())) {
+            //if the array is of class types
+            if (isSameTypeKind(((VarDecl)ie.ref.decl).type.typeKind, TypeKind.CLASS)) {
+                //generate reference (does nothing)
+                ie.ref.generate(this);
+                //get size of each class object
+                int classSize = ((ClassRep)((ClassDecl)((ClassType)((VarDecl)ie.ref.decl).type).className.decl).entity).size;
+                //fetch address of reference from runtime entity
+                int address = ((KnownAddress)ie.ref.decl.entity).displacement*classSize;
+                //load address of array onto the stack
+                Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.LB, address+3);
+                //load value of index expression onto the stack
+                ie.ixExpr.generate(this);
+                //add to get proper address
+                Machine.emit(Machine.Prim.add);
+                //push value held at new address onto the stack
+                Machine.emit(Machine.Op.LOADI);
+            }
+            else {
+                //generate reference (does nothing)
+                ie.ref.generate(this);
+                //fetch address of reference from runtime entity
+                int address = ((KnownAddress)ie.ref.decl.entity).displacement;
+                //load address of array onto the stack
+                Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.LB, address+3);
+                //load value of index expression onto the stack
+                ie.ixExpr.generate(this);
+                //add to get proper address
+                Machine.emit(Machine.Prim.add);
+                //push value held at new address onto the stack
+                Machine.emit(Machine.Op.LOADI);
+            }
+        }        
         return null;
     }
     
@@ -736,17 +863,21 @@ public class ASTCodeGen implements Generator<Object> {
     public Object visitNewArrayExpr(NewArrayExpr expr){
         expr.eltType.generate(this);
         if (expr.eltType.getClass().equals(new ClassType(null, null).getClass())) {
-            //int classSize = getClass(((ClassType)expr.eltType).className.spelling);
+            int classSize = ((ClassDecl)((ClassType)expr.eltType).className.decl).entity.size;
             //push value of index expression onto the stack
             expr.sizeExpr.generate(this);
+            //push value of class size onto the stack
+            Machine.emit(Machine.Op.LOADL, classSize);
+            //Multiply to get total array size 
+            Machine.emit(Machine.Prim.mult);
             //create instruction for call to new array
             Machine.emit(Machine.Prim.newarr); 
         }
         else {
             //push value of index expression onto the stack
-            expr.sizeExpr.generate(this);
+            expr.sizeExpr.generate(this);              
             //create instruction for call to new array
-            Machine.emit(Machine.Prim.newarr);            
+            Machine.emit(Machine.Prim.newarr);                               
         }
         return null;
     }
@@ -793,7 +924,6 @@ public class ASTCodeGen implements Generator<Object> {
         //special case for .length of array
         if (qr.ref.getClass().equals(new IdRef(null, null).getClass())) {
             if (((IdRef)qr.ref).id.spelling == "length" && qr.id.decl.type.getClass().equals(new ArrayType(null, null).getClass())) {
-                System.out.println("999999999");
                 //get address of array
                 address = ((KnownAddress)qr.id.decl.entity).displacement;
                 //load length of array onto stack

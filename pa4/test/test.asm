@@ -4,29 +4,35 @@
   3         HALT   (0)   
   4  L10:   LOADL        2
   5         CALL         newarr  
-  6         LOADA        0[HT]
-  7         STOREI 
-  8         LOADA        -1[HB]
-  9         LOADL        3
- 10         LOADL        0
+  6         LOADL        3
+  7         CALL         newarr  
+  8         LOADL        5
+  9         LOADL        0
+ 10         LOAD         3[LB]
  11         CALL         add     
  12         STOREI 
- 13         LOAD         -1[HB]
- 14         LOADL        0
- 15         CALL         add     
- 16         LOADI  
- 17         LOADL        1
- 18         CALL         ne      
- 19         JUMPIF (0)   L11
- 20         LOAD         -1[HB]
- 21         LOADL        0
- 22         CALL         add     
- 23         LOADI  
- 24         LOAD         0[LB]
- 25         CALLI        L12
- 26  L11:   LOADL        20
- 27         CALL         putintnl
- 28         RETURN (0)   1
- 29  L12:   LOAD         -1[LB]
- 30         CALL         putintnl
- 31         RETURN (0)   1
+ 13         LOADL        6
+ 14         LOADL        1
+ 15         LOAD         3[LB]
+ 16         CALL         add     
+ 17         STOREI 
+ 18         LOAD         3[LB]
+ 19         LOADL        0
+ 20         CALL         add     
+ 21         LOADI  
+ 22         LOADL        1
+ 23         CALL         ne      
+ 24         JUMPIF (0)   L11
+ 25         LOAD         3[LB]
+ 26         LOADL        1
+ 27         CALL         add     
+ 28         LOADI  
+ 29         CALL         putintnl
+ 30         LOAD         4[LB]
+ 31         LOADL        1
+ 32         CALL         add     
+ 33         LOADI  
+ 34         CALL         putintnl
+ 35  L11:   LOADL        20
+ 36         CALL         putintnl
+ 37         RETURN (0)   1

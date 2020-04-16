@@ -2,9 +2,8 @@ package miniJava.CodeGenerator;
 
 public class ClassRep extends RuntimeEntity {
     public int offsetInPackage;
-    public int size;
 
-    public ClassRep(int offsetInPackage, int size) {
+    public ClassRep(int offsetInPackage, short size) {
         this.offsetInPackage = offsetInPackage;
         this.size = size;
     }

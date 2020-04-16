@@ -1,16 +1,14 @@
 class Counter {
 
-    public static int count;
     public static void main(String [] args){
         int[] i = new int[2];
-        i[0] = 3;
+        int[] j = new int[3];
+        i[0] = 5;
+        i[1] = 6;
         if (i[0] != 1) {
-            print(i[0]);
+            System.out.println(i[1]);
+            System.out.println(j[1]);
         }
         System.out.println(20);
-    }
-
-    public static void print(int par) {
-        System.out.println(par);
     }
 }
