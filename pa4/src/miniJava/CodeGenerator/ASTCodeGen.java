@@ -52,6 +52,7 @@ import miniJava.AbstractSyntaxTrees.ParameterDecl;
 import miniJava.AbstractSyntaxTrees.ParameterDeclList;
 import miniJava.AbstractSyntaxTrees.QualRef;
 import miniJava.AbstractSyntaxTrees.RefExpr;
+import miniJava.AbstractSyntaxTrees.Reference;
 import miniJava.AbstractSyntaxTrees.ReturnStmt;
 import miniJava.AbstractSyntaxTrees.Statement;
 import miniJava.AbstractSyntaxTrees.StatementList;
@@ -193,6 +194,19 @@ public class ASTCodeGen implements Generator<Object> {
         }
         return false;
     }
+
+    public Prim [] intToPrim = Machine.Prim.values();
+
+    public int primToInt(Prim p) {
+		int counter = 0;
+		for (Prim prim: intToPrim) {
+			if (prim == p) {
+				return counter;
+			}
+			counter++;
+		}
+		return -1;
+	}
 
     public boolean isSameTypeKind(TypeKind type1, TypeKind type2) {
         if (type1.equals(type2)) {
@@ -658,12 +672,12 @@ public class ASTCodeGen implements Generator<Object> {
         expr.expr.generate(this);
         //emit proper primitive op instruction
         if (expr.operator.spelling.equals("!")) {
-            op = Machine.primToInt(Machine.Prim.not);
+            op = primToInt(Machine.Prim.not);
             Machine.emit(Machine.Prim.not);
             return new Integer(op);
         }
         else if (expr.operator.spelling.equals("-")) {
-            op = Machine.primToInt(Machine.Prim.neg);
+            op = primToInt(Machine.Prim.neg);
             Machine.emit(Machine.Prim.neg);
             return new Integer(op);
         }
@@ -686,9 +700,26 @@ public class ASTCodeGen implements Generator<Object> {
     public Object visitRefExpr(RefExpr expr){
         //generate reference (does nothing)
         expr.ref.generate(this);
+        //length special case
+        if (expr.ref.getClass().equals(new IdRef(null, null).getClass())) {            
+            if (((IdRef)expr.ref).id.spelling.equals("length") && ((IdRef)expr.ref).id.decl.type.getClass().equals(new ArrayType(null, null).getClass())) {
+                expr.ref.decl = new FieldDecl(false, true, new BaseType(TypeKind.INT, new SourcePosition(0, 0)), "length", new SourcePosition(0, 0));
+                return null;
+            }
+        } 
+        else if (expr.ref.getClass().equals(new QualRef(null, null, null).getClass())) {
+            Reference ref = expr.ref;
+            while (ref.getClass().equals(new QualRef(null, null, null).getClass())) {
+                ref = ((QualRef)ref).ref; 
+            }  
+            if (((IdRef)ref).id.spelling.equals("length")) {
+                expr.ref.decl = new FieldDecl(false, true, new BaseType(TypeKind.INT, new SourcePosition(0, 0)), "length", new SourcePosition(0, 0));
+                return null;
+            }
+        } 
         //get address of reference declaration
         int address = 0;
-        //load value held by reference onto the stack        
+        //load value held by reference onto the stack       
         if (expr.ref.decl.getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass())) {            
             address = ((FieldRep)expr.ref.decl.entity).offsetFromSB;
             Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.OB, address);
@@ -923,11 +954,11 @@ public class ASTCodeGen implements Generator<Object> {
         int address;
         //special case for .length of array
         if (qr.ref.getClass().equals(new IdRef(null, null).getClass())) {
-            if (((IdRef)qr.ref).id.spelling == "length" && qr.id.decl.type.getClass().equals(new ArrayType(null, null).getClass())) {
+            if (((IdRef)qr.ref).id.spelling.equals("length") && qr.id.decl.type.getClass().equals(new ArrayType(null, null).getClass())) {
                 //get address of array
                 address = ((KnownAddress)qr.id.decl.entity).displacement;
                 //load length of array onto stack
-                Machine.emit(Machine.Op.LOADA, 1, Machine.Reg.HB, address);
+                Machine.emit(Machine.Op.LOAD, 1, Machine.Reg.LB, address+3);
                 //load array size onto stack
                 Machine.emit(Machine.Prim.arraylen);
                 return null;

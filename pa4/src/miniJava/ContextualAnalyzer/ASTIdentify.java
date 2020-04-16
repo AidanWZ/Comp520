@@ -155,7 +155,7 @@ public class ASTIdentify implements Traveller<Object> {
         //loading file classes and members + default classes
         loadClassMembers();
         //displayAllMembers();
-        //checkForMain();
+        checkForMain();
     }
 
     public void loadClassMembers() {
@@ -628,6 +628,13 @@ public class ASTIdentify implements Traveller<Object> {
         stmt.ref.visit(this);
         stmt.val.visit(this);        
         if (stmt.ref.getClass().equals(new QualRef(null, null, null).getClass())) { 
+            //cannot assign to length field
+            if (((QualRef)stmt.ref).ref.getClass().equals(new IdRef(null, null).getClass())) {
+                if (((IdRef)((QualRef)stmt.ref).ref).id.spelling.equals("length")
+                && ((QualRef)stmt.ref).id.decl.type.getClass().equals(new ArrayType(null, null).getClass())) {
+                    typeError(stmt.posn.start, "visitAssignStmt", "Cannot asgn value to length field of an array");
+                }
+            }
             //if the reference is a this reference
             if (((QualRef)stmt.ref).ref.getClass().equals(new ThisRef(new SourcePosition()).getClass())) {                            
                 if (search(((QualRef)stmt.ref).id.spelling) == null) {            
@@ -1071,6 +1078,18 @@ public class ASTIdentify implements Traveller<Object> {
     
     public Object visitRefExpr(RefExpr expr) throws TypeError, IdentificationError {
         expr.ref.visit(this);
+        //length special case
+        if (expr.ref.getClass().equals(new QualRef(null, null, null).getClass())) {
+            Reference ref = expr.ref;            
+            while (ref.getClass().equals(new QualRef(null, null, null).getClass())) {
+                ref = ((QualRef)ref).ref; 
+            } 
+            if (((IdRef)ref).id.spelling.equals("length")) {                
+                expr.type = TypeKind.INT;
+                expr.ref.decl = new FieldDecl(false, true, new BaseType(TypeKind.INT, new SourcePosition(0, 0)), "length", new SourcePosition(0, 0));
+                return null;
+            }
+        }
         //if the reference is a qualified reference
         if (expr.ref.getClass().equals(new QualRef(null, null, null).getClass())) {                       
             if (searchAllMembers(((QualRef)expr.ref).id.spelling) != null) {                                 
@@ -1259,7 +1278,12 @@ public class ASTIdentify implements Traveller<Object> {
     }
     
     public Object visitIdRef(IdRef ref) throws TypeError, IdentificationError {        
-        ref.id.visit(this);           
+        ref.id.visit(this); 
+        //length special case
+        if (ref.id.spelling.equals("length")) {
+            ref.decl = new FieldDecl(false, true, new BaseType(TypeKind.INT, new SourcePosition(0, 0)), "length", new SourcePosition(0, 0));
+            return null;
+        }       
         // if identifier is a defined within the current class
         if (search(ref.id.spelling) != null) {            
             // if the member is a local variable
@@ -1292,13 +1316,21 @@ public class ASTIdentify implements Traveller<Object> {
     }
         
     public Object visitQRef(QualRef qr) throws TypeError, IdentificationError { 
+        //is a static reference?
         if (qr.ref.getClass().equals(new QualRef(null, null, null).getClass())) {
             if (((MemberDecl)searchAllMembers(((QualRef)qr.ref).id.spelling)).isStatic) {
                 staticRef = true;
             }
         }                
         qr.id.visit(this);
-        qr.ref.visit(this);
+        qr.ref.visit(this);    
+        //length special case
+        if (qr.ref.getClass().equals(new IdRef(null, null).getClass())) {                       
+            if (((IdRef)qr.ref).id.spelling.equals("length") && qr.id.decl.type.getClass().equals(new ArrayType(null, null).getClass())) {
+                qr.ref.decl = new FieldDecl(false, true, new BaseType(TypeKind.INT, new SourcePosition(0, 0)), "length", new SourcePosition(0, 0));                 
+                return null;
+            }
+        }    
         Declaration temp = null;        
         //if the qref is a this reference        
         if (qr.ref.getClass().equals(new ThisRef(new SourcePosition()).getClass())) {  
@@ -1336,8 +1368,9 @@ public class ASTIdentify implements Traveller<Object> {
                 }  
                 ((IdRef)ref).visit(this);   
                 //primitive items can not have qualified references
-                if (!search(qr.id.spelling).type.getClass().equals(new ClassType(null, null).getClass())) {
-                    identificationError(ref.posn.start, "visitQRef", "The primitive type " + search(qr.id.spelling).type.typeKind + " of c does not have a field foo");
+                if (!search(qr.id.spelling).type.getClass().equals(new ClassType(null, null).getClass()) &&
+                    !search(qr.id.spelling).type.getClass().equals(new ArrayType(null, null).getClass())) {
+                    identificationError(ref.posn.start, "visitQRef", "The primitive type " + search(qr.id.spelling).type.typeKind + " of c does not have a field " + ((IdRef)qr.ref).id.spelling);
                 }                            
                 qr.decl = searchAllMembers(((IdRef)ref).id.spelling);         
             }   
