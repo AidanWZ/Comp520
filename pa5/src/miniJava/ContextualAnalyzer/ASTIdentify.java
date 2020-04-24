@@ -710,13 +710,15 @@ public class ASTIdentify implements Traveller<Object> {
                     //cannot assign class type to primitive type  
                     if (!isSameTypeKind((((VarDecl)stmt.varDecl).type).typeKind, TypeKind.CLASS)) {                       
                         typeError(stmt.posn.start, "visitVarDeclStmt", "declaration (" + stmt.varDecl.type.typeKind + ") and assignment (" + TypeKind.CLASS +  ") types dont match");
-                    }
-                    
-                    // if class types match
+                    }                    
+                    // if class types match                    
                     if (stmt.varDecl.type.getClass().equals(new ClassType(null, null).getClass())) {
                         if (((ClassType)stmt.varDecl.type).className.spelling.equals(((NewObjectExpr)stmt.initExp).classtype.className.spelling)) {
                             stmt.varDecl.type.typeKind = stmt.initExp.type;
                         }
+                        else {
+                            typeError(stmt.posn.start, "visitVarDeclStmt", "declaration (" + ((ClassType)stmt.varDecl.type).className.spelling + ") and assignment (" + ((NewObjectExpr)stmt.initExp).classtype.className.spelling + ") types dont match");
+                        } 
                     }                    
                     else {
                         typeError(stmt.posn.start, "visitVarDeclStmt", "declaration (" + ((ClassType)stmt.varDecl.type).className.spelling + ") and assignment (" + ((NewObjectExpr)stmt.initExp).classtype.className.spelling + ") types dont match");
@@ -957,7 +959,7 @@ public class ASTIdentify implements Traveller<Object> {
         expr.operator.visit(this);
         expr.left.visit(this);
         expr.right.visit(this);        
-        //if comparing two class types
+        //if comparing two class types        
         if (isSameTypeKind(expr.left.type, TypeKind.CLASS) && isSameTypeKind(expr.right.type, TypeKind.CLASS)) {
             if (expr.left.getClass().equals(new NewObjectExpr(null, null).getClass()) &&
                 expr.right.getClass().equals(new NewObjectExpr(null, null).getClass())) {
@@ -1111,12 +1113,8 @@ public class ASTIdentify implements Traveller<Object> {
     public Object visitRefExpr(RefExpr expr) throws TypeError, IdentificationError {
         expr.ref.visit(this);      
         //length special case
-        if (expr.ref.getClass().equals(new QualRef(null, null, null).getClass())) {
-            Reference ref = expr.ref;            
-            while (ref.getClass().equals(new QualRef(null, null, null).getClass())) {
-                ref = ((QualRef)ref).ref; 
-            } 
-            if (((IdRef)ref).id.spelling.equals("length")) {                
+        if (expr.ref.getClass().equals(new QualRef(null, null, null).getClass())) {            
+            if (((QualRef)expr.ref).id.spelling.equals("length")) {                
                 expr.type = TypeKind.INT;
                 expr.ref.decl = new FieldDecl(false, true, new BaseType(TypeKind.INT, new SourcePosition(0, 0)), "length", new SourcePosition(0, 0));
                 return null;
@@ -1128,11 +1126,11 @@ public class ASTIdentify implements Traveller<Object> {
         }                    
         //if the reference is a qualified reference
         else if (expr.ref.getClass().equals(new QualRef(null, null, null).getClass())) {                                    
-            if (searchAllMembers(((QualRef)expr.ref).id.spelling) != null) {  
+            if (((QualRef)expr.ref).decl != null) {  
                 //check for private membership 
-                if (searchAllMembers(((QualRef)expr.ref).id.spelling).getClass().equals(new MethodDecl(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)), new ParameterDeclList(), new StatementList(), new SourcePosition(0, 0)).getClass()) ||
-                    searchAllMembers(((QualRef)expr.ref).id.spelling).getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass())) {                        
-                        if (((MemberDecl)searchAllMembers(((QualRef)expr.ref).id.spelling)).isPrivate) {
+                if (((QualRef)expr.ref).decl.getClass().equals(new MethodDecl(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)), new ParameterDeclList(), new StatementList(), new SourcePosition(0, 0)).getClass()) ||
+                    ((QualRef)expr.ref).decl.getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass())) {                        
+                    if (((MemberDecl)((QualRef)expr.ref).decl).isPrivate) {
                         if (((MemberDecl)findMember(((QualRef)expr.ref).id.spelling)) != null) {
                             //if the field is a member of an instance of the current class
                             expr.type = findMember(((QualRef)expr.ref).id.spelling).type.typeKind;                            
@@ -1228,7 +1226,7 @@ public class ASTIdentify implements Traveller<Object> {
                 counter++;
             }
         }
-        expr.type = searchAllMembers(ref.decl.name).type.typeKind;
+        expr.type = expr.functionRef.decl.type.typeKind;
         return null;     
     }
     
@@ -1304,7 +1302,6 @@ public class ASTIdentify implements Traveller<Object> {
             ref.decl = searchAllMembers(ref.id.spelling);            
         }    
         else {
-            displayAllMembers();
             identificationError(ref.posn.start, "visitIdRef", "Variable " + ref.id.spelling + " may not have been initialized");
         }                      
         return null;        
@@ -1313,97 +1310,53 @@ public class ASTIdentify implements Traveller<Object> {
     public Object visitQRef(QualRef qr) throws TypeError, IdentificationError {         
         qr.ref.visit(this);
         qr.id.visit(this);
+        
         String classname = null;
         String membername = null; 
-        if(qr.ref.decl.type.getClass().equals(new ClassType(null, null).getClass())) {
+        //if reference is a class
+        if(qr.ref.decl.getClass().equals(new ClassDecl(null, null, null, null).getClass())) {
+            classname = qr.ref.decl.name;
+            membername = qr.id.spelling;
+            MemberDecl m = getMemberInClass(classname, membername);           
+            if (m != null) {
+                if (this.className.equals(classname) && !m.isStatic && this.methodStatic) {
+                    identificationError(qr.posn.start, "visitQRef", "Class member " + membername + " must be declared static");
+                }
+                qr.decl = getMemberInClass(classname, membername);
+            }
+            else {
+                identificationError(qr.posn.start, "visitQRef", "No field by the name of " + membername);
+            }
+        }
+        //if reference is a class instance
+        else if (qr.ref.decl.type.getClass().equals(new ClassType(null, null).getClass())) {            
             classname = ((ClassType)qr.ref.decl.type).className.spelling;
             membername = qr.id.spelling;
+            if (qr.ref.decl.getClass().equals(new MethodDecl(new FieldDecl(true, true, null, null, new SourcePosition()), new ParameterDeclList(), new StatementList(), new SourcePosition()).getClass())) {
+                typeError(qr.posn.start, "visitQRef", membername + " is not a valid qualifier for " + qr.ref.decl.name);
+            }
+            if (getMemberInClass(classname, membername) != null) {
+                qr.decl = getMemberInClass(classname, membername);
+            }
+            else {
+                identificationError(qr.posn.start, "visitQRef", "No field by the name of " + membername);
+            }
         }
         else if (qr.ref.decl.type.getClass().equals(new ArrayType(null, null).getClass())) {
             classname = qr.ref.decl.name;
             membername = qr.id.spelling;
+            //length special case, create length field
+            if (membername.equals("length")) {
+                qr.ref.decl = new FieldDecl(false, true, new BaseType(TypeKind.INT, new SourcePosition(0, 0)), "length", new SourcePosition(0, 0));                 
+                return null;
+            }  
+            else {
+                identificationError(qr.posn.start, "visitQRef", "No field by the name of " + membername);
+            }      
         }  
         else {
             identificationError(qr.ref.posn.start, "visitQRef", "The primitive type " + search(qr.id.spelling).type.typeKind + " of " + qr.ref.decl.name + " does not have a field " + qr.id.spelling);
-        }           
-        
-        //length special case, create length field
-        if (qr.ref.getClass().equals(new IdRef(null, null).getClass())) {                       
-            if (qr.id.spelling.equals("length") && qr.ref.decl.type.getClass().equals(new ArrayType(null, null).getClass())) {
-                qr.ref.decl = new FieldDecl(false, true, new BaseType(TypeKind.INT, new SourcePosition(0, 0)), "length", new SourcePosition(0, 0));                 
-                return null;
-            }
-        } 
-
-        if (getMemberInClass(classname, membername) != null) {
-            qr.decl = getMemberInClass(classname, membername);
-        }
-
-        // //if finding a method ref
-        // if (this.methodRef) {            
-        //     if (!qr.ref.decl.type.getClass().equals(new ClassType(null, null).getClass()) &&
-        //         !this.classNamesInclusive.contains(qr.ref.decl.name)) {
-        //     } 
-        //     if (getMemberInClass(classname, qr.id.spelling) != null) {                
-        //         qr.decl = getMemberInClass(classname, membername);
-        //     }
-        //     else {
-        //         identificationError(qr.posn.start, "visitQRef", "Class member " + membername + " must be declared static");
-        //     }
-        //     return null;
-        // }
-
-        // //if the qref is a this reference        
-        // if (qr.ref.getClass().equals(new ThisRef(new SourcePosition()).getClass())) {  
-        //     Declaration temp = getMemberInClass(this.className, qr.id.spelling);      
-        //     if (temp == null) {
-        //         identificationError(qr.posn.start, "visitQRef", qr.id.spelling + " cannot be resolved or is not a field");
-        //     }
-        //     if (!methodStatic) {
-        //         qr.decl = temp;
-        //     }
-        //     else {
-        //         identificationError(qr.posn.start, "visitQRef", "Cannot use this in a static context");
-        //     }            
-        // } 
-        // //if the reference is a variable, parameter or member declaration of the current class
-        // else if (search(qr.id.spelling) != null) {                                                                              
-        //     if (search(qr.id.spelling).getClass().equals(new VarDecl(null, null, null).getClass()) ||
-        //         search(qr.id.spelling).getClass().equals(new ParameterDecl(null, null, null).getClass())) {   
-        //         //primitive items can not have qualified references
-        //         if (!qr.ref.decl.type.getClass().equals(new ClassType(null, null).getClass()) &&
-        //             !search(qr.id.spelling).type.getClass().equals(new ArrayType(null, null).getClass())) {                        
-        //             identificationError(qr.ref.posn.start, "visitQRef", "The primitive type " + search(qr.ref.decl.name).type.typeKind + " of " + qr.ref.decl.name + " does not have a field " + qr.id.spelling);
-        //         }    
-        //         qr.decl = getMemberInClass(this.className, qr.id.spelling);                                               
-        //     }   
-        //     // if the member is a class member
-        //     else if (search(qr.id.spelling).getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass()) ||
-        //              search(qr.id.spelling).getClass().equals(new MethodDecl(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)), new ParameterDeclList(), new StatementList(), new SourcePosition(0, 0)).getClass())) {                          
-        //                 //primitive items can not have qualified references
-        //         if (!qr.ref.decl.type.getClass().equals(new ClassType(null, null).getClass()) &&
-        //             !this.classNamesInclusive.contains(qr.ref.decl.name)) {;
-        //             identificationError(qr.ref.posn.start, "visitQRef", "The primitive type " + search(qr.id.spelling).type.typeKind + " of " + qr.ref.decl.name + " does not have a field " + qr.id.spelling);
-        //         }            
-        //         if (((MemberDecl)searchAllMembers(qr.id.spelling)).isStatic ||
-        //             qr.ref.decl.getClass().equals(new ParameterDecl(null, null, null).getClass()) ||
-        //             qr.ref.decl.getClass().equals(new VarDecl(null, null, null).getClass()) ||
-        //             qr.ref.decl.getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass())) {
-        //             qr.decl = getMemberInClass(this.className, qr.id.spelling);                   
-        //         }
-        //         else {
-        //             identificationError(qr.posn.start, "visitQRef", "Class member " + qr.id.spelling+ " must be declared static");
-        //         }                          
-        //     }                          
-        // }
-        // //if reference is member of another class
-        // else if (searchAllMembers(qr.id.spelling) != null) { 
-        //     //check for invalid refs                   
-        //     if (searchAllMembers(qr.id.spelling).getClass().equals(new MethodDecl(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)), new ParameterDeclList(), new StatementList(), new SourcePosition(0, 0)).getClass()) ||
-        //         searchAllMembers(qr.id.spelling).getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass())) {
-        //         qr.decl = searchAllMembers(qr.id.spelling);
-        //     }                             
-        // }    
+        }              
         return null;      
     }
     

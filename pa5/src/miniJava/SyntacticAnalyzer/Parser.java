@@ -120,7 +120,7 @@ public class Parser {
 			ClassDeclList list = new ClassDeclList();
 			while(currentToken.kind == Token.CLASS){
 				ClassDecl clas = parseClassDeclaration();
-				clas.type = new BaseType(TypeKind.CLASS, current.position);
+				clas.type = new ClassType(new Identifier(new Token(Token.IDENTIFIER, clas.name, current.position)), current.position);
 				list.add(clas);				
 			}			
 			if (currentToken.kind != Token.EOT) {								
