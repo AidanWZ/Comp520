@@ -446,10 +446,22 @@ public class Parser {
 					else {
 						Expression i = parseExpression();
 						accept(Token.RBRACKET, "parseStatement");
-						accept(Token.EQUALS, "parseStatement");					
-						Expression arrayExpr = parseExpression();
-						accept(Token.SEMICOLON, "parseStatement");
-						return new IxAssignStmt(id, i, arrayExpr, current.position);									
+						if (currentToken.kind == Token.EQUALS) {
+							accept(Token.EQUALS, "parseStatement");					
+							Expression arrayExpr = parseExpression();
+							accept(Token.SEMICOLON, "parseStatement");
+							return new IxAssignStmt(id, i, arrayExpr, current.position);	
+						}
+						else if (currentToken.kind == Token.PERIOD) {
+							accept(Token.PERIOD, "parseStatement");					
+							Reference ref = parseReference();
+							if (currentToken.kind == Token.EQUALS) {
+								accept(Token.EQUALS, "parseStatement");					
+								Expression arrayExpr = parseExpression();
+								accept(Token.SEMICOLON, "parseStatement");
+								return new AssignStmt(ref, arrayExpr, current.position);
+							}	
+						}								
 					}
 				}
 				else if(currentToken.kind == Token.PERIOD){					
@@ -861,7 +873,16 @@ public class Parser {
 					acceptIt();
 					Expression exprLocal = parseExpression();
 					accept(Token.RBRACKET, "parseExpandedExpression");
-					return new IxExpr(r, exprLocal, current.position);
+					if (currentToken.kind == Token.PERIOD) {
+						acceptIt();
+						Reference arrayRef = parseReference();
+						RefExpr refexpr = new RefExpr(new QualRef(new IdRef(new Identifier(new Token(Token.IDENTIFIER, ((IdRef)r).id.spelling, current.position)), current.position), new Identifier(new Token(Token.IDENTIFIER, ((IdRef)arrayRef).id.spelling, current.position)),  current.position), current.position);
+						refexpr.weird = true;
+						return refexpr;
+					}
+					else {
+						return new IxExpr(r, exprLocal, current.position);
+					}					
 				}
 				else if (currentToken.kind == Token.PERIOD){	
 					while(currentToken.kind == Token.PERIOD)  {

@@ -1,7 +1,12 @@
 class Test {
 
     public static void main(String [] args){
-        int[] i = new int[23];
-        i.length = 9;
+        Derp[] i = new Derp[2];
+        //i[0].poo = 4;
+        System.out.println(i.length);
     }
+}
+
+class Derp {    
+    public int poo;
 }

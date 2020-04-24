@@ -64,6 +64,7 @@ import miniJava.AbstractSyntaxTrees.VarDecl;
 import miniJava.AbstractSyntaxTrees.VarDeclStmt;
 import miniJava.AbstractSyntaxTrees.WhileStmt;
 import miniJava.CodeGenerator.FieldRep;
+import miniJava.CodeGenerator.KnownAddress;
 import miniJava.CodeGenerator.MethodRep;
 import miniJava.SyntacticAnalyzer.SourcePosition;
 import miniJava.SyntacticAnalyzer.Token;
@@ -632,7 +633,7 @@ public class ASTIdentify implements Traveller<Object> {
             if (((QualRef)stmt.ref).ref.getClass().equals(new IdRef(null, null).getClass())) {
                 if (((IdRef)((QualRef)stmt.ref).ref).id.spelling.equals("length")
                 && ((QualRef)stmt.ref).id.decl.type.getClass().equals(new ArrayType(null, null).getClass())) {
-                    typeError(stmt.posn.start, "visitAssignStmt", "Cannot asgn value to length field of an array");
+                    typeError(stmt.posn.start, "visitAssignStmt", "Cannot assign value to length field of an array");
                 }
             }
             //if the reference is a this reference
@@ -671,51 +672,71 @@ public class ASTIdentify implements Traveller<Object> {
             }                                     
         } 
         //if just an IdReference       
-        else {                 
-            if (search(((IdRef)stmt.ref).id.spelling) == null) {            
-                identificationError(stmt.posn.start, "visitAssignStmt", "Variable may not have been initialized");                  
-            }           
-            else {
-                //if the reference is a class
-                if (isSameTypeKind(search(((IdRef)stmt.ref).id.spelling).type.typeKind, TypeKind.CLASS)) {                
-                    if (stmt.val.getClass().equals(new NullExpr(null).getClass())) {
-                        stmt.val.type = TypeKind.CLASS;
+        else {  
+            //if a field decl  
+            if (searchAllMembers(((IdRef)stmt.ref).id.spelling).getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass())) {                
+                if (searchAllMembers(((IdRef)stmt.ref).id.spelling).getClass().equals(new BaseType(null, null).getClass())) {
+                    if (isSameTypeKind(searchAllMembers(((IdRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
+                    
                     }
-                    else if (((RefExpr)stmt.val).ref.getClass().equals(new ThisRef(null).getClass())) {
-                        stmt.val.type = TypeKind.CLASS;
-                    }
-                    if (isSameTypeKind(search(((IdRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
-                        
-                    }
-                    else {
+                    else {                            
                         typeError(stmt.posn.start, "visitAssignStmt", "Type mismatch: cannot convert from " + stmt.val.type + " to " + search(stmt.ref.decl.name).type.typeKind);
                     }
                 }
-                else {                     
-                    if (search(((IdRef)stmt.ref).id.spelling).getClass().equals(new BaseType(null, null).getClass())) {
-                        if (isSameTypeKind(search(((IdRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
-                        
+                else if (searchAllMembers(((IdRef)stmt.ref).id.spelling).getClass().equals(new ArrayType(null, null).getClass())) {
+                    if (isSameTypeKind(searchAllMembers(((IdRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
+                    
+                    }
+                    else {                            
+                        typeError(stmt.posn.start, "visitAssignStmt", "Type mismatch: cannot convert from " + stmt.val.type + " to " + search(stmt.ref.decl.name).type.typeKind);
+                    }
+                } 
+            } 
+            else {
+                if (search(((IdRef)stmt.ref).id.spelling) == null) {            
+                    identificationError(stmt.posn.start, "visitAssignStmt", "Variable may not have been initialized");                  
+                }           
+                else {                
+                    if (isSameTypeKind(search(((IdRef)stmt.ref).id.spelling).type.typeKind, TypeKind.CLASS)) {                
+                        if (stmt.val.getClass().equals(new NullExpr(null).getClass())) {
+                            stmt.val.type = TypeKind.CLASS;
                         }
-                        else {                            
+                        else if (((RefExpr)stmt.val).ref.getClass().equals(new ThisRef(null).getClass())) {
+                            stmt.val.type = TypeKind.CLASS;
+                        }
+                        if (isSameTypeKind(search(((IdRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
+                            
+                        }
+                        else {
                             typeError(stmt.posn.start, "visitAssignStmt", "Type mismatch: cannot convert from " + stmt.val.type + " to " + search(stmt.ref.decl.name).type.typeKind);
                         }
                     }
-                    else if (search(((IdRef)stmt.ref).id.spelling).getClass().equals(new ArrayType(null, null).getClass())) {
-                        if (isSameTypeKind(search(((IdRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
-                        
+                    else {                     
+                        if (search(((IdRef)stmt.ref).id.spelling).getClass().equals(new BaseType(null, null).getClass())) {
+                            if (isSameTypeKind(search(((IdRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
+                            
+                            }
+                            else {                            
+                                typeError(stmt.posn.start, "visitAssignStmt", "Type mismatch: cannot convert from " + stmt.val.type + " to " + search(stmt.ref.decl.name).type.typeKind);
+                            }
                         }
-                        else {                            
-                            typeError(stmt.posn.start, "visitAssignStmt", "Type mismatch: cannot convert from " + stmt.val.type + " to " + search(stmt.ref.decl.name).type.typeKind);
-                        }
-                    }                                       
-                }
-                if (search(((IdRef)stmt.ref).id.spelling).getClass().equals(new MethodDecl(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)), new ParameterDeclList(), new StatementList(), new SourcePosition(0, 0)).getClass()) ||
-                    search(((IdRef)stmt.ref).id.spelling).getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass())) {
-                    if (methodStatic && !((MemberDecl)search(((IdRef)stmt.ref).id.spelling)).isStatic) {
-                        identificationError(stmt.posn.start, "visitAssignStmt", "Class member " + stmt.ref.decl.name + " must be declared static");                    
-                    } 
-                }                                          
-            }                    
+                        else if (search(((IdRef)stmt.ref).id.spelling).getClass().equals(new ArrayType(null, null).getClass())) {
+                            if (isSameTypeKind(search(((IdRef)stmt.ref).id.spelling).type.typeKind, stmt.val.type)) {
+                            
+                            }
+                            else {                            
+                                typeError(stmt.posn.start, "visitAssignStmt", "Type mismatch: cannot convert from " + stmt.val.type + " to " + search(stmt.ref.decl.name).type.typeKind);
+                            }
+                        }                                       
+                    }
+                    if (search(((IdRef)stmt.ref).id.spelling).getClass().equals(new MethodDecl(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)), new ParameterDeclList(), new StatementList(), new SourcePosition(0, 0)).getClass()) ||
+                        search(((IdRef)stmt.ref).id.spelling).getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass())) {
+                        if (methodStatic && !((MemberDecl)search(((IdRef)stmt.ref).id.spelling)).isStatic) {
+                            identificationError(stmt.posn.start, "visitAssignStmt", "Class member " + stmt.ref.decl.name + " must be declared static");                    
+                        } 
+                    }                                          
+                }      
+            }                                      
         }
         return null;
     }
@@ -1090,6 +1111,11 @@ public class ASTIdentify implements Traveller<Object> {
                 return null;
             }
         }
+        //weird special case 
+        if (expr.weird) {
+            expr.type = ((FieldDecl)searchAllMembers(((QualRef)expr.ref).id.spelling)).type.typeKind;
+            ((QualRef)expr.ref).id.decl = searchAllMembers(((QualRef)expr.ref).id.spelling);
+        }
         //if the reference is a qualified reference
         if (expr.ref.getClass().equals(new QualRef(null, null, null).getClass())) {                       
             if (searchAllMembers(((QualRef)expr.ref).id.spelling) != null) {                                 
@@ -1114,17 +1140,20 @@ public class ASTIdentify implements Traveller<Object> {
                         temp = ((QualRef)temp).ref;
                     }  
                     //check for private membership 
-                    if (((MemberDecl)searchAllMembers(((IdRef)temp).id.spelling)).isPrivate) {
-                        if (((MemberDecl)findMember(((IdRef)temp).id.spelling)) != null) {
-                            //if the field is a member of an instance of the current class
+                    if (searchAllMembers(((IdRef)temp).id.spelling).getClass().equals(new MethodDecl(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)), new ParameterDeclList(), new StatementList(), new SourcePosition(0, 0)).getClass()) ||
+                        searchAllMembers(((IdRef)temp).id.spelling).getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass())) {
+                        if (((MemberDecl)searchAllMembers(((IdRef)temp).id.spelling)).isPrivate) {
+                            if (((MemberDecl)findMember(((IdRef)temp).id.spelling)) != null) {
+                                //if the field is a member of an instance of the current class
+                            }
+                            else {
+                                identificationError(expr.posn.start, "visitRefExpr", "The field " + ((MemberDecl)searchAllMembers(((IdRef)temp).id.spelling)).name + " is not visible");
+                            }
                         }
                         else {
-                            identificationError(expr.posn.start, "visitRefExpr", "The field " + ((MemberDecl)searchAllMembers(((IdRef)temp).id.spelling)).name + " is not visible");
+                            expr.type = searchAllMembers(((IdRef)temp).id.spelling).type.typeKind;    
                         }
-                    }
-                    else {
-                        expr.type = searchAllMembers(((IdRef)temp).id.spelling).type.typeKind;
-                    }
+                    }                                                                         
                     return null;
                 }                        
             }
@@ -1426,13 +1455,16 @@ public class ASTIdentify implements Traveller<Object> {
                 previousRef = ref;
                 ref = ((QualRef)ref).ref; 
             }             
-            ((IdRef)ref).visit(this);  
-            if (((MemberDecl)searchAllMembers(((IdRef)ref).id.spelling)).isStatic  || staticRef) {
-                qr.decl = searchAllMembers(((IdRef)ref).id.spelling);
-            }
-            else {                
-                identificationError(qr.posn.start, "visitQRef", "Class member " + ((IdRef)qr.ref).id.spelling + " must be declared static");
-            }        
+            ((IdRef)ref).visit(this); 
+            if (searchAllMembers(((IdRef)ref).id.spelling).getClass().equals(new MethodDecl(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)), new ParameterDeclList(), new StatementList(), new SourcePosition(0, 0)).getClass()) ||
+                searchAllMembers(((IdRef)ref).id.spelling).getClass().equals(new FieldDecl(false, false, new BaseType(TypeKind.VOID, new SourcePosition(0, 0)), "println", new SourcePosition(0, 0)).getClass())) {
+                    if (((MemberDecl)searchAllMembers(((IdRef)ref).id.spelling)).isStatic  || staticRef) {
+                        qr.decl = searchAllMembers(((IdRef)ref).id.spelling);
+                    }
+                    else {                
+                        identificationError(qr.posn.start, "visitQRef", "Class member " + ((IdRef)qr.ref).id.spelling + " must be declared static");
+                    }
+            }                             
         }    
         return null;      
     }
