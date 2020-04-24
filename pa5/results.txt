@@ -1,0 +1,53 @@
+PA4 results for aidanwz
+
+PA4 scoring:
+fail4yy tests earn 1 point for exit(4)
+pass4xx tests (xx <  20) earn 1 point for compilation, plus 2 points for
+        correct execution of generated mJAM program.
+pass4xx tests (xx >= 20) earn 1 point for compilation, plus 4 points for
+        correct execution of generated mJAM program
+
+building miniJava compiler ... build succeeded.
+
+Test fail401: was correctly rejected.                          Points = 1
+Test fail402: was correctly rejected.                          Points = 1
+Test fail403: was correctly rejected.                          Points = 1
+Test fail404: was correctly rejected.                          Points = 1
+Test fail405: was correctly rejected.                          Points = 1
+Test fail406: was correctly rejected.                          Points = 1
+Test fail407: FAILED to be rejected.                           Points = 0
+Test fail410: was correctly rejected.                          Points = 1
+Test fail411: was correctly rejected.                          Points = 1
+Test fail412: miniJava compiler FAILED in compilation of test. Points = 0
+Test pass401: mJAM program yields correct result!              Points = 3
+Test pass402: mJAM program FAILS to yield correct result.      Points = 1
+Test pass403: mJAM program yields correct result!              Points = 3
+Test pass404: mJAM program yields correct result!              Points = 3
+Test pass405: miniJava compiler FAILED in compilation of test. Points = 0
+Test pass406: FAILED to be accepted.                           Points = 0
+Test pass407: miniJava compiler FAILED in compilation of test. Points = 0
+Test pass408: FAILED to be accepted.                           Points = 0
+Test pass409: FAILED to be accepted.                           Points = 0
+Test pass410: mJAM program yields correct result!              Points = 3
+Test pass411: miniJava compiler FAILED in compilation of test. Points = 0
+Test pass412: miniJava compiler FAILED in compilation of test. Points = 0
+Test pass413: mJAM code FAILED during execution.               Points = 1
+Test pass414: miniJava compiler FAILED in compilation of test. Points = 0
+Test pass415: miniJava compiler FAILED in compilation of test. Points = 0
+Test pass416: mJAM code FAILED during execution.               Points = 1
+Test pass417: miniJava compiler FAILED in compilation of test. Points = 0
+Test pass420: miniJava compiler FAILED in compilation of test. Points = 0
+Test pass421: miniJava compiler FAILED in compilation of test. Points = 0
+Test pass422: miniJava compiler FAILED in compilation of test. Points = 0
+Test pass423: miniJava compiler FAILED in compilation of test. Points = 0
+Test pass424: FAILED to be accepted.                           Points = 0
+Test pass425: mJAM code FAILED during execution.               Points = 1
+Test pass426: FAILED to be accepted.                           Points = 0
+Test pass430: FAILED to be accepted.                           Points = 0
+
+
+Runtime errors: 15  (15 errors and 0 hangs)
+Fail testcases:   Correct: 8   Incorrect: 1
+Pass testcases:   Correct: 4   Incorrect: 7
+
+Total Points Earned: 24
