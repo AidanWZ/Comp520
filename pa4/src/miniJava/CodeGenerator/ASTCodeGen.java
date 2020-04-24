@@ -451,7 +451,7 @@ public class ASTCodeGen implements Generator<Object> {
     
     public Object visitVardeclStmt(VarDeclStmt stmt){
         //if the var declaration is an array
-        if (stmt.varDecl.type.getClass().equals(new ArrayType(null, null).getClass())) {
+        if (stmt.varDecl.type.getClass().equals(new ArrayType(null, null).getClass())) {            
             //save HT
             int currentHT = this.heapSpaceUsed;
             //generate var decl entity (address of array on heap)
@@ -467,6 +467,7 @@ public class ASTCodeGen implements Generator<Object> {
         } 
         //if the variable is a base or class type
         else {
+            displayAST();
             //generate var decl entity
             stmt.varDecl.entity = new KnownAddress(this.declarationLevel, this.frameSpaceUsed);
             if (stmt.initExp != null) {
@@ -894,7 +895,7 @@ public class ASTCodeGen implements Generator<Object> {
     public Object visitNewArrayExpr(NewArrayExpr expr){
         expr.eltType.generate(this);
         if (expr.eltType.getClass().equals(new ClassType(null, null).getClass())) {
-            int classSize = ((ClassDecl)((ClassType)expr.eltType).className.decl).entity.size;
+            int classSize = getClassSize(findClass(((ClassType)expr.eltType).className.spelling).fieldDeclList);
             //push value of index expression onto the stack
             expr.sizeExpr.generate(this);
             //push value of class size onto the stack

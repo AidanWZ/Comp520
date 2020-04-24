@@ -32,4 +32,5 @@ public class RefExpr extends Expression
     }
 
     public Reference ref;
+    public boolean weird = false;
 }

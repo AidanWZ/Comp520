@@ -2,9 +2,11 @@
   1         CALL         newarr  
   2         CALL         L10
   3         HALT   (0)   
-  4  L10:   LOADL        23
-  5         CALL         newarr  
-  6         LOAD         3[LB]
-  7         CALL         arraylen
-  8         CALL         putintnl
-  9         RETURN (0)   1
+  4  L10:   LOADL        2
+  5         LOADL        1
+  6         CALL         mult    
+  7         CALL         newarr  
+  8         STORE        0[LB]
+  9         LOAD         3[LB]
+ 10         CALL         putintnl
+ 11         RETURN (0)   1
